@@ -1,0 +1,24 @@
+:root {
+  --text: rgb(244, 244, 245);
+  --background: rgb(29, 29, 32);
+}
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+body {
+  flex-grow: 1;
+  display: flex;
+  font-family: "Roboto", sans-serif;
+  color: var(--text);
+  background-color: var(--background);
+}
