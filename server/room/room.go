@@ -19,6 +19,8 @@ type room struct {
 }
 
 func (r *room) addPeer() peer {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	id := r.nextPeerId
 	peer := peer{id, make(chan []byte)}
 	r.nextPeerId += 1
@@ -27,6 +29,8 @@ func (r *room) addPeer() peer {
 }
 
 func (r *room) removePeer(id int) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 	close(r.peers[id].messages)
 	delete(r.peers, id)
 }
@@ -80,6 +84,18 @@ func (m *Manager) leaveRoom(id uuid.UUID, peerId int) {
 	m.rooms[id].removePeer(peerId)
 	if len(m.rooms[id].peers) == 0 {
 		delete(m.rooms, id)
+	}
+}
+
+func (m *Manager) Close() {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	for _, r := range m.rooms {
+		r.mutex.Lock()
+		for _, p := range r.peers {
+			close(p.messages)
+		}
+		r.mutex.Unlock()
 	}
 }
 
