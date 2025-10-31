@@ -1,0 +1,25 @@
+:root {
+	--global-bg: #0a0a0a;
+	--bg-dark: #1a1a1a;
+	--bg-hover: #1a1a1a;
+	--border: #1f1f1f;
+	--primary: #4f46e5;
+	--green: #22c55e;
+	--red: #ef4444;
+	--gray: #888;
+}
+
+* {
+	padding: 0;
+	margin: 0;
+	color: #e5e5e5;
+	font-family: 'Roboto', sans-serif;
+	box-sizing: border-box;
+	-webkit-tap-highlight-color: transparent;
+}
+
+button {
+	background: none;
+	border: none;
+	cursor: pointer;
+}
