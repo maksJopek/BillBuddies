@@ -1,4 +1,4 @@
-import { settings } from './settings.svelte.ts';
+import { settings } from './settings.svelte';
 
 export interface Expense {
 	id: string;

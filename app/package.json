@@ -16,6 +16,7 @@
 	"dependencies": {
 		"@tauri-apps/api": "^2",
 		"@tauri-apps/plugin-dialog": "~2.4.0",
+		"@tauri-apps/plugin-fs": "~2.4.4",
 		"@tauri-apps/plugin-opener": "^2",
 		"pdfjs-dist": "^5.4.296",
 		"tauri-plugin-sharetarget-api": "^0.1.6"

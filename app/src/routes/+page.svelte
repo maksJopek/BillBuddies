@@ -3,6 +3,7 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import { addRoom, appData, deleteRoom, editRoom, type Room } from '$lib/states/data.svelte';
 	import { settings } from '$lib/states/settings.svelte';
+	import { openPayment } from '$lib/pdf';
 	import { goto } from '$app/navigation';
 
 	let modalCreateShown = $state(false);
@@ -10,6 +11,7 @@
 	let modalEditShown = $state(false);
 	let editedRoom = $state<Room>();
 	let editedRoomName = $state('');
+	let pdf = $state('');
 
 	const allBalanace = $derived(appData.rooms.reduce((sum, room) => sum + room.balance, 0));
 
@@ -31,6 +33,19 @@
 		editedRoomName = room.name;
 		modalEditShown = true;
 	}
+
+	async function testPDF() {
+		try {
+			const data = await openPayment();
+			if (data) {
+				pdf = JSON.stringify(data);
+			} else {
+				pdf = 'something went wrong';
+			}
+		} catch (error) {
+			pdf = `${error}`;
+		}
+	}
 </script>
 
 <main>
@@ -42,6 +57,7 @@
 			</span>
 		</h4>
 		<button onclick={() => (modalCreateShown = true)}>+ New Room</button>
+		<button onclick={testPDF}>Test PDF</button>
 	</div>
 	<div class="rooms">
 		{#each appData.rooms ?? [] as room}
@@ -57,6 +73,7 @@
 			</button>
 		{/each}
 	</div>
+	{pdf}
 </main>
 
 <Modal bind:open={modalCreateShown} title="Stwórz nowy pokój" onsave={saveRoom}>

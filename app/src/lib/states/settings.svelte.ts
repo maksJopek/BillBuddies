@@ -1,4 +1,4 @@
-import { appData } from './data.svelte.ts';
+import { appData } from './data.svelte';
 
 interface Settings {
 	user: {
