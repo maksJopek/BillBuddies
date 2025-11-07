@@ -3,15 +3,19 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import { addRoom, appData, deleteRoom, editRoom, type Room } from '$lib/states/data.svelte';
 	import { settings } from '$lib/states/settings.svelte';
-	import { openPayment } from '$lib/pdf';
+	import { extractPayment, openPayment, type PaymentData } from '$lib/pdf';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
+	import type { PluginListener } from '@tauri-apps/api/core';
+	import { listenForShareEvents } from 'tauri-plugin-sharetarget-api';
 
 	let modalCreateShown = $state(false);
 	let roomName = $state('');
 	let modalEditShown = $state(false);
 	let editedRoom = $state<Room>();
 	let editedRoomName = $state('');
-	let pdf = $state('');
+	let paymentOpen = $state<PaymentData | null>(null);
+	let paymentShare = $state<PaymentData | null>(null);
 
 	const allBalanace = $derived(appData.rooms.reduce((sum, room) => sum + room.balance, 0));
 
@@ -34,18 +38,20 @@
 		modalEditShown = true;
 	}
 
-	async function testPDF() {
-		try {
-			const data = await openPayment();
-			if (data) {
-				pdf = JSON.stringify(data);
-			} else {
-				pdf = 'something went wrong';
-			}
-		} catch (error) {
-			pdf = `${error}`;
-		}
+	async function handleOpenPayment() {
+		paymentOpen = await openPayment();
 	}
+
+	onMount(() => {
+		let listener: PluginListener | null = null;
+		listenForShareEvents(async (intent) => {
+			if (!intent.stream) {
+				return;
+			}
+			paymentShare = await extractPayment(intent.stream);
+		}).then((l) => (listener = l));
+		return () => listener?.unregister();
+	});
 </script>
 
 <main>
@@ -57,7 +63,7 @@
 			</span>
 		</h4>
 		<button onclick={() => (modalCreateShown = true)}>+ New Room</button>
-		<button onclick={testPDF}>Test PDF</button>
+		<button onclick={handleOpenPayment}>Open PDF</button>
 	</div>
 	<div class="rooms">
 		{#each appData.rooms ?? [] as room}
@@ -73,7 +79,14 @@
 			</button>
 		{/each}
 	</div>
-	{pdf}
+	<div>
+		<p>payment open:</p>
+		<p>{JSON.stringify(paymentOpen)}</p>
+	</div>
+	<div>
+		<p>payment share:</p>
+		<p>{JSON.stringify(paymentShare)}</p>
+	</div>
 </main>
 
 <Modal bind:open={modalCreateShown} title="Stwórz nowy pokój" onsave={saveRoom}>

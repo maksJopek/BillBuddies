@@ -131,6 +131,17 @@ function extractPaymentData(text: string[]): PaymentData {
 	}
 }
 
+export async function extractPayment(file: string): Promise<PaymentData | null> {
+	const buffer = await readFile(file);
+	const pdf = await getDocument(buffer).promise;
+	const page = await pdf.getPage(1);
+	const content = await page.getTextContent();
+	const text = content.items
+		.map((item) => ('str' in item ? item.str : ''))
+		.filter((str) => str.trim() !== '');
+	return extractPaymentData(text);
+}
+
 export async function openPayment(): Promise<PaymentData | null> {
 	const path = await openDialog({
 		defaultPath: await downloadDir(),
@@ -141,12 +152,5 @@ export async function openPayment(): Promise<PaymentData | null> {
 	if (!path) {
 		return null;
 	}
-	const file = await readFile(path);
-	const pdf = await getDocument(file).promise;
-	const page = await pdf.getPage(1);
-	const content = await page.getTextContent();
-	const text = content.items
-		.map((item) => ('str' in item ? item.str : ''))
-		.filter((str) => str.trim() !== '');
-	return extractPaymentData(text);
+	return extractPayment(path);
 }
