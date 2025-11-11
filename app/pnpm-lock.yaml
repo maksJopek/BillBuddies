@@ -23,9 +23,9 @@ importers:
       pdfjs-dist:
         specifier: ^5.4.296
         version: 5.4.296
-      tauri-plugin-sharetarget-api:
-        specifier: ^0.1.6
-        version: 0.1.6
+      tauri-plugin-get-pdf-api:
+        specifier: file:./tauri-plugin-get-pdf
+        version: file:tauri-plugin-get-pdf
     devDependencies:
       '@sveltejs/adapter-static':
         specifier: ^3.0.6
@@ -696,8 +696,8 @@ packages:
     resolution: {integrity: sha512-NRAAL96UXKwOTgS+8T6tQT8mILlylTJePvUjyUAU+ryE+MQTA71PXiQz5cMsFey2eSttBy+3kt+BR0l1XFNNBw==}
     engines: {node: '>=18'}
 
-  tauri-plugin-sharetarget-api@0.1.6:
-    resolution: {integrity: sha512-R9LgXu7hn8LaCW5ll8tJ4es0N2nCNVnptT4v3HTXInDra9pm5CuXalX3m5W7+/XTwOFn0sMRv4eOKz8S5FEy1w==}
+  tauri-plugin-get-pdf-api@file:tauri-plugin-get-pdf:
+    resolution: {directory: tauri-plugin-get-pdf, type: directory}
 
   tinyglobby@0.2.15:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
@@ -1268,7 +1268,7 @@ snapshots:
       magic-string: 0.30.19
       zimmerframe: 1.1.4
 
-  tauri-plugin-sharetarget-api@0.1.6:
+  tauri-plugin-get-pdf-api@file:tauri-plugin-get-pdf:
     dependencies:
       '@tauri-apps/api': 2.8.0
 

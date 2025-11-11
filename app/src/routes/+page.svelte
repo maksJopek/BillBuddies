@@ -1,13 +1,13 @@
 <script lang="ts">
-	import Input from '$lib/components/Input.svelte';
-	import Modal from '$lib/components/Modal.svelte';
+	import { onDestroy, onMount } from 'svelte';
+	import { listen, TauriEvent } from '@tauri-apps/api/event';
+	import { checkPendingIntent, type Intent } from 'tauri-plugin-get-pdf-api';
+	import { goto } from '$app/navigation';
+	import { extractPayment, openPayment, type PaymentData } from '$lib/pdf';
 	import { addRoom, appData, deleteRoom, editRoom, type Room } from '$lib/states/data.svelte';
 	import { settings } from '$lib/states/settings.svelte';
-	import { extractPayment, openPayment, type PaymentData } from '$lib/pdf';
-	import { goto } from '$app/navigation';
-	import { onMount } from 'svelte';
-	import type { PluginListener } from '@tauri-apps/api/core';
-	import { listenForShareEvents } from 'tauri-plugin-sharetarget-api';
+	import Input from '$lib/components/Input.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 
 	let modalCreateShown = $state(false);
 	let roomName = $state('');
@@ -42,15 +42,21 @@
 		paymentOpen = await openPayment();
 	}
 
-	onMount(() => {
-		let listener: PluginListener | null = null;
-		listenForShareEvents(async (intent) => {
-			if (!intent.stream) {
-				return;
-			}
-			paymentShare = await extractPayment(intent.stream);
-		}).then((l) => (listener = l));
-		return () => listener?.unregister();
+	async function handleIntent() {
+		const intent = await checkPendingIntent();
+		if (intent === null || intent.uri === undefined) {
+			return;
+		}
+		paymentShare = await extractPayment(intent.uri);
+	}
+
+	let unlisten: any;
+	onMount(async () => {
+		handleIntent();
+		unlisten = listen(TauriEvent.WINDOW_FOCUS, handleIntent);
+	});
+	onDestroy(() => {
+		unlisten();
 	});
 </script>
 
