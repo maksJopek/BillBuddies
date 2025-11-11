@@ -19,7 +19,7 @@
 		"@tauri-apps/plugin-fs": "~2.4.4",
 		"@tauri-apps/plugin-opener": "^2",
 		"pdfjs-dist": "^5.4.296",
-		"tauri-plugin-sharetarget-api": "^0.1.6"
+    "tauri-plugin-get-pdf-api": "file:./tauri-plugin-get-pdf"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^3.0.6",

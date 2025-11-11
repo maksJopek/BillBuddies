@@ -9,7 +9,7 @@
     "core:default",
     "opener:default",
     "dialog:default",
-    "sharetarget:default",
-    "fs:default"
+    "fs:default",
+    "get-pdf:default"
   ]
 }
