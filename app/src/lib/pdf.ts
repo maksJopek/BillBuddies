@@ -152,13 +152,31 @@ export async function extractPaymentFile(
 }
 
 export async function openPayment(): Promise<PaymentData | null> {
-	const path = await openDialog({
-		defaultPath: await downloadDir(),
-		directory: false,
-		multiple: false,
-		filters: [{ name: 'PDF', extensions: ['pdf'] }]
-	});
-	if (!path) {
+	let buffer: ArrayBuffer | null;
+	if (insideTauri) {
+		const path = await openDialog({
+			defaultPath: await downloadDir(),
+			directory: false,
+			multiple: false,
+			filters: [{ name: 'PDF', extensions: ['pdf'] }]
+		});
+		if (path === null) {
+			return null;
+		}
+		buffer = (await readFile(path)).buffer;
+	} else {
+		buffer = await new Promise((res) => {
+			const input = document.createElement('input');
+			input.type = 'file';
+			input.accept = 'application/pdf';
+			input.oncancel = () => res(null);
+			input.onchange = async () => {
+				res(await input.files![0].arrayBuffer());
+			};
+			input.click();
+		});
+	}
+	if (!buffer) {
 		return null;
 	}
 	return extractPaymentFile(path);
