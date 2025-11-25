@@ -67,7 +67,9 @@ function extractPKOPaymentData(text: string[]): PaymentData {
 	const data: PaymentData = { amount: null, date: null };
 	for (const item of text) {
 		if (item.startsWith(PKO_AMOUNT_PREFIX)) {
-			const amount = parseFloat(item.substring(PKO_AMOUNT_PREFIX.length).replaceAll(',', '.'));
+			const amount = parseFloat(
+				item.substring(PKO_AMOUNT_PREFIX.length).replaceAll(',', '.')
+			);
 			if (!Number.isNaN(amount)) {
 				data.amount = amount;
 			}
@@ -131,7 +133,9 @@ function extractPaymentData(text: string[]): PaymentData {
 	}
 }
 
-export async function extractPayment(file: string): Promise<PaymentData | null> {
+export async function extractPayment(
+	file: string
+): Promise<PaymentData | null> {
 	const buffer = await readFile(file);
 	const pdf = await getDocument(buffer).promise;
 	const page = await pdf.getPage(1);

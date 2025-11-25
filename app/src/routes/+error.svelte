@@ -2,20 +2,22 @@
 	import { page } from '$app/state';
 </script>
 
-<main>
+<div>
 	<h1>Wystąpił błąd</h1>
-	<h3>{page.status}</h3>
-	<h2>{page.error!.message}</h2>
-</main>
+	<p class="message">{page.error!.message}</p>
+	<p class="code">{page.status}</p>
+</div>
 
 <style>
-	main {
-		width: 95%;
-		margin: 2rem auto;
+	div {
 		text-align: center;
+		margin-top: 25%;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
 	}
-	h3 {
-		margin-block: 0.5rem 1.5rem;
+
+	.code {
 		color: var(--gray);
 	}
 </style>

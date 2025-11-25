@@ -1,14 +1,11 @@
-import { page } from '$app/state';
 import { error } from '@sveltejs/kit';
-import { appData } from '../../../lib/states/data.svelte.ts';
+import { page } from '$app/state';
+import { findRoom } from '$lib/state';
 
 export function load({ params }: typeof page) {
-	const room = appData.rooms.find((r) => r.id === params.id);
-	if (room === undefined) {
+	const room = params.id ? findRoom(params.id) : null;
+	if (!room) {
 		error(404, 'Pokój z takim ID nie istnieje');
 	}
-
-	return {
-		room
-	};
+	return { room };
 }
