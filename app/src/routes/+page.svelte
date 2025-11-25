@@ -1,176 +1,117 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { listen, TauriEvent } from '@tauri-apps/api/event';
-	import { checkPendingIntent, type Intent } from 'tauri-plugin-get-pdf-api';
-	import { goto } from '$app/navigation';
-	import { extractPayment, openPayment, type PaymentData } from '$lib/pdf';
-	import { addRoom, appData, deleteRoom, editRoom, type Room } from '$lib/states/data.svelte';
-	import { settings } from '$lib/states/settings.svelte';
-	import Input from '$lib/components/Input.svelte';
-	import Modal from '$lib/components/Modal.svelte';
+	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
+	import { checkPendingIntent } from 'tauri-plugin-get-pdf-api';
+	import { extractPayment } from '$lib/pdf';
+	import { appState, addRoom, deleteRoom, editRoom } from '$lib/state';
+	import {
+		RoomCreateModal,
+		RoomEditModal,
+		type RoomFormProps,
+		Button,
+		PlusIcon,
+		RoomCard,
+		List
+	} from '$lib/components';
+	import Balance from '$lib/components/shared/Balance.svelte';
 
-	let modalCreateShown = $state(false);
-	let roomName = $state('');
-	let modalEditShown = $state(false);
-	let editedRoom = $state<Room>();
-	let editedRoomName = $state('');
-	let paymentOpen = $state<PaymentData | null>(null);
-	let paymentShare = $state<PaymentData | null>(null);
+	let roomCreateModalOpen = $state(false);
+	let roomEditModalOpen = $state(false);
+	let roomEditModalId = $state('');
 
-	const allBalanace = $derived(appData.rooms.reduce((sum, room) => sum + room.balance, 0));
+	const totalBalanace = $derived(
+		appState.rooms.reduce((sum, room) => sum + room.balance, 0)
+	);
 
-	async function saveRoom() {
-		await addRoom({
-			name: roomName,
-			userNames: {
-				[settings.user.id]: settings.user.name
-			},
+	function handleOpenRoomCreateModal() {
+		roomCreateModalOpen = true;
+	}
+
+	function handleCreateRoom(room: RoomFormProps) {
+		addRoom({
+			...room,
 			balance: 0,
+			users: [{ ...appState.account }],
 			expenses: []
 		});
-		modalCreateShown = false;
+		roomCreateModalOpen = false;
 	}
 
-	function showEditModal(e: Event, room: Room) {
-		e.preventDefault();
-		editedRoom = room;
-		editedRoomName = room.name;
-		modalEditShown = true;
+	function handleOpenRoomEditModal(id: string) {
+		roomEditModalOpen = true;
+		roomEditModalId = id;
 	}
 
-	async function handleOpenPayment() {
-		paymentOpen = await openPayment();
+	function handleEditRoom(room: RoomFormProps) {
+		editRoom(roomEditModalId, room);
+		roomEditModalOpen = false;
+	}
+
+	function handleDeleteRoom() {
+		deleteRoom(roomEditModalId);
 	}
 
 	async function handleIntent() {
 		const intent = await checkPendingIntent();
-		if (intent === null || intent.uri === undefined) {
+		if (!intent || !intent.uri) {
 			return;
 		}
-		paymentShare = await extractPayment(intent.uri);
+		await extractPayment(intent.uri);
+		// TODO
 	}
 
-	let unlisten: any;
+	let unlisten: UnlistenFn | null = null;
+
 	onMount(async () => {
+		if (!('__TAURI__' in window)) {
+			return;
+		}
 		handleIntent();
-		unlisten = listen(TauriEvent.WINDOW_FOCUS, handleIntent);
+		unlisten = await listen(TauriEvent.WINDOW_FOCUS, handleIntent);
 	});
+
 	onDestroy(() => {
-		unlisten();
+		unlisten?.();
 	});
 </script>
 
-<main>
-	<div class="top">
-		<h4>
-			Podsumowanie:
-			<span class:pos={allBalanace > 0} class:neg={allBalanace < 0}>
-				{allBalanace.toFixed(2)}zł
-			</span>
-		</h4>
-		<button onclick={() => (modalCreateShown = true)}>+ New Room</button>
-		<button onclick={handleOpenPayment}>Open PDF</button>
+<div class="top">
+	<div class="balance">
+		<span>Podsumowanie:</span>
+		<Balance amount={totalBalanace} />
 	</div>
-	<div class="rooms">
-		{#each appData.rooms ?? [] as room}
-			<button
-				onclick={() => goto(`/room/${room.id}`)}
-				oncontextmenu={(e) => showEditModal(e, room)}
-				class="room"
-			>
-				{room.name}
-				<span class:pos={room.balance > 0} class:neg={room.balance < 0}>
-					{room.balance > 0 ? '+' : ''}{room.balance.toFixed(2)}zł
-				</span>
-			</button>
-		{/each}
-	</div>
-	<div>
-		<p>payment open:</p>
-		<p>{JSON.stringify(paymentOpen)}</p>
-	</div>
-	<div>
-		<p>payment share:</p>
-		<p>{JSON.stringify(paymentShare)}</p>
-	</div>
-</main>
+	<Button onclick={handleOpenRoomCreateModal}>
+		<PlusIcon />
+		<span>Nowy pokój</span>
+	</Button>
+</div>
+<List>
+	{#each appState.rooms ?? [] as r}
+		<RoomCard {...r} onEdit={() => handleOpenRoomEditModal(r.id)} />
+	{/each}
+</List>
 
-<Modal bind:open={modalCreateShown} title="Stwórz nowy pokój" onsave={saveRoom}>
-	<Input label="Nazwa pokoju" type="text" bind:value={roomName} placeholder="Berlin" />
-</Modal>
+<RoomCreateModal bind:open={roomCreateModalOpen} onCreate={handleCreateRoom} />
 
-<Modal
-	bind:open={modalEditShown}
-	title={'Edytuj pokój' + roomName}
-	saveText="Zapisz"
-	cancelText="Usuń"
-	oncancel={() => deleteRoom(editedRoom!)}
-	onsave={() => editRoom({ ...editedRoom!, name: editedRoomName })}
-	--cancel-btn-bg="var(--red)"
->
-	<Input label="Nazwa pokoju" type="text" bind:value={editedRoomName} />
-</Modal>
+<RoomEditModal
+	bind:open={roomEditModalOpen}
+	id={roomEditModalId}
+	onEdit={handleEditRoom}
+	onDelete={handleDeleteRoom}
+/>
 
 <style>
-	main {
-		display: grid;
-		overflow-y: auto;
-		gap: 0.5rem;
-		max-width: 500px;
-		max-height: 100%;
-	}
-
 	.top {
-		padding: 1rem;
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 1rem;
-		border-bottom: 1px solid #1f1f1f;
+		flex-wrap: wrap;
+		gap: 2rem;
 	}
 
-	.top button {
-		padding: 0.5rem;
-		border-radius: 0.5rem;
-		background: #4f46e5;
-		color: white;
-		font-size: 1.25em;
-	}
-
-	.top button:hover {
-		background: #1f1f1f;
-		color: #e5e5e5;
-		background: #4338ca;
-	}
-
-	.rooms {
+	.balance {
 		display: flex;
-		flex-direction: column;
-		overflow-y: auto;
-		gap: 1rem;
-	}
-
-	.room {
-		background-color: var(--bg-dark);
-		border: 1px solid var(--border);
-		margin-inline: 1rem;
-		border-radius: 0.5rem;
-		padding: 1rem;
-		display: flex;
-		justify-content: space-between;
-		text-decoration: none;
-		cursor: pointer;
-		font-size: 1em;
-	}
-
-	.room:hover {
-		border-color: var(--primary);
-	}
-
-	.pos {
-		color: var(--green);
-	}
-	.neg {
-		color: var(--red);
+		gap: 0.5rem;
+		font-weight: 500;
 	}
 </style>
