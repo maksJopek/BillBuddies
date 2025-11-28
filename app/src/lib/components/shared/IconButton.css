@@ -1,5 +1,4 @@
-button,
-a {
+.IconButton {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -10,11 +9,10 @@ a {
 	border: none;
 	transition: background-color 0.2s ease;
 	cursor: pointer;
+	color: inherit;
 }
 
-button:hover,
-button:focus-visible,
-a:hover,
-a:focus-visible {
+.IconButton:hover,
+.IconButton:focus-visible {
 	background-color: var(--background-hover);
 }

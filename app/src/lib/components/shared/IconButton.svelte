@@ -11,6 +11,6 @@
 	let { children, ...props }: Props = $props();
 </script>
 
-<button {...props}>
+<button {...props} class="IconButton">
 	{@render children()}
 </button>

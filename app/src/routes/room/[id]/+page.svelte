@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		pdfShare,
 		appState,
 		addExpense,
 		deleteExpense,
@@ -28,6 +29,12 @@
 	let expenseEditModalId = $state('');
 
 	const roomId = $derived(data.room.id);
+
+	$effect(() => {
+		if (pdfShare.roomId === roomId) {
+			expenseAddModalOpen = true;
+		}
+	});
 
 	function handleOpenExpenseAddModal() {
 		expenseAddModalOpen = true;

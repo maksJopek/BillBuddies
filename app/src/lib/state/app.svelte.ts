@@ -27,6 +27,7 @@ export interface AppState {
 	rooms: Room[];
 	account: User;
 	loaded: boolean;
+	tauri: boolean;
 }
 
 const LOCAL_STORAGE_ACCOUNT_KEY = 'account';
@@ -41,7 +42,8 @@ export const appState = $state<AppState>({
 				id: crypto.randomUUID(),
 				name: 'Bob'
 			},
-	loaded: false
+	loaded: false,
+	tauri: '__TAURI_INTERNALS__' in window
 });
 
 function calcBalance(room: Omit<Room, 'balance'>) {

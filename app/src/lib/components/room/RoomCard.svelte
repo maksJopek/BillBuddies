@@ -38,6 +38,7 @@
 		transition: border-color 0.2s ease;
 		outline: none;
 		text-decoration: none;
+		color: inherit;
 	}
 
 	a:hover,

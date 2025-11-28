@@ -1,23 +1,71 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { SettingsModal, IconButton, SettingsIcon } from '$lib/components';
-	import { editAccount, loadData } from '$lib/state';
+	import { onDestroy, onMount } from 'svelte';
+	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
+	import { checkPendingIntent } from 'tauri-plugin-get-pdf-api';
+	import { goto } from '$app/navigation';
+	import { extractPaymentFile, type PaymentData } from '$lib/pdf';
+	import {
+		SettingsModal,
+		IconButton,
+		SettingsIcon,
+		RoomSelectModal
+	} from '$lib/components';
+	import { pdfShare, appState, editAccount, loadData } from '$lib/state';
 	import '../app.css';
 
 	let { children } = $props();
 
-	let settingsModal = $state(false);
+	let settingsModalOpen = $state(false);
+	let roomSelectModalOpen = $state(false);
+	let roomSelectModalPayment = $state<PaymentData>({
+		amount: null,
+		date: null
+	});
 
 	function handleOpenSettings() {
-		settingsModal = true;
+		settingsModalOpen = true;
 	}
 
 	function handleChangeSettings(username: string) {
 		editAccount({ name: username });
-		settingsModal = false;
+		settingsModalOpen = false;
 	}
 
-	onMount(loadData);
+	function handleSelectRoom(id: string) {
+		pdfShare.roomId = id;
+		pdfShare.data = roomSelectModalPayment;
+		roomSelectModalOpen = false;
+		roomSelectModalPayment = { amount: null, date: null };
+		goto(`/room/${id}`);
+	}
+
+	async function handleIntent() {
+		const intent = await checkPendingIntent();
+		if (!intent || !intent.uri) {
+			return;
+		}
+		const data = await extractPaymentFile(intent.uri);
+		if (!data) {
+			return;
+		}
+		roomSelectModalOpen = true;
+		roomSelectModalPayment = data;
+	}
+
+	let unlisten: UnlistenFn | null = null;
+
+	onMount(async () => {
+		await loadData();
+		if (!appState.tauri) {
+			return;
+		}
+		handleIntent();
+		unlisten = await listen(TauriEvent.WINDOW_FOCUS, handleIntent);
+	});
+
+	onDestroy(() => {
+		unlisten?.();
+	});
 </script>
 
 <div class="app">
@@ -32,7 +80,13 @@
 	</main>
 </div>
 
-<SettingsModal bind:open={settingsModal} onChange={handleChangeSettings} />
+<SettingsModal bind:open={settingsModalOpen} onChange={handleChangeSettings} />
+
+<RoomSelectModal
+	bind:open={roomSelectModalOpen}
+	payment={roomSelectModalPayment}
+	onSelect={handleSelectRoom}
+/>
 
 <style>
 	.app {
@@ -52,6 +106,7 @@
 	}
 
 	a {
+		color: inherit;
 		font-size: 1.5rem;
 		font-weight: 700;
 		text-decoration: none;

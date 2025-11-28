@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { appState, findUser, type Expense } from '$lib/state';
+	import { findUser, type Expense } from '$lib/state';
+	import { formatDatePretty } from '$lib/date';
 
 	interface Props {
 		roomId: string;
@@ -9,40 +10,13 @@
 
 	let { roomId, expense, onEdit }: Props = $props();
 
-	function formatTimePart(n: number) {
-		if (n > 9) {
-			return `${n}`;
-		}
-		return `0${n}`;
-	}
-
-	function formatDate(date: Date) {
-		const months = [
-			'Sty',
-			'Lut',
-			'Mar',
-			'Kwi',
-			'Maj',
-			'Cze',
-			'Lip',
-			'Sie',
-			'Wrz',
-			'Paź',
-			'Lis',
-			'Gru'
-		];
-		const d = `${date.getDate()} ${months[date.getMonth()]}`;
-		const t = `${formatTimePart(date.getHours())}:${formatTimePart(date.getMinutes())}`;
-		return `${d} ${t}`;
-	}
-
 	let meta = $derived.by(() => {
 		let result = '';
 		const u = findUser(roomId, expense.paidBy);
 		if (u) {
 			result += `${u.name} · `;
 		}
-		result += formatDate(new Date(expense.date));
+		result += formatDatePretty(new Date(expense.date));
 		return result;
 	});
 

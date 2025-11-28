@@ -1,46 +1,28 @@
 <script lang="ts">
 	import type { HTMLInputAttributes } from 'svelte/elements';
+	import { Field } from '$lib/components';
+	import './Input.css';
 
 	interface Props extends Omit<HTMLInputAttributes, 'id'> {
 		label: string;
 	}
 
-	const uid = $props.id();
+	const id = $props.id();
 
-	let { label, value = $bindable(), ...props }: Props = $props();
+	let {
+		label,
+		value = $bindable(),
+		class: className,
+		...props
+	}: Props = $props();
 </script>
 
-<div>
-	<label for={uid}>{label}</label>
-	<input id={uid} bind:value autocomplete="off" {...props} />
-</div>
-
-<style>
-	div {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	label {
-		font-size: 0.875rem;
-		font-weight: 500;
-		letter-spacing: 0.25px;
-	}
-
-	input {
-		color-scheme: dark;
-		padding: 0.75rem;
-		border: 2px solid var(--border);
-		border-radius: var(--border-radius);
-		font-size: 1rem;
-		outline: none;
-		transition: border-color 0.2s ease;
-		background-color: transparent;
-	}
-
-	input:hover,
-	input:focus-visible {
-		border-color: var(--primary-hover);
-	}
-</style>
+<Field {id} {label}>
+	<input
+		{id}
+		bind:value
+		autocomplete="off"
+		{...props}
+		class={['Input', className]}
+	/>
+</Field>

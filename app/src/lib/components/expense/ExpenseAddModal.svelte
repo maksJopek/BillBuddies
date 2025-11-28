@@ -1,6 +1,12 @@
 <script lang="ts">
-	import { Modal, ExpenseForm, type ExpenseFormProps } from '$lib/components';
-	import { openPayment } from '$lib/pdf';
+	import { pdfShare, appState } from '$lib/state';
+	import {
+		Modal,
+		ExpenseForm,
+		type ExpenseFormProps,
+		Button
+	} from '$lib/components';
+	import { extractPayment, openPayment, type PaymentData } from '$lib/pdf';
 
 	interface Props {
 		open: boolean;
@@ -11,9 +17,13 @@
 
 	let form = $state<ExpenseFormProps>({
 		amount: 0,
-		date: '',
-		description: ''
+		description: '',
+		date: ''
 	});
+
+	let pdfInput = $state<HTMLInputElement | null>(null);
+
+	const isPDFShare = $derived(pdfShare.roomId !== null);
 
 	$effect(() => {
 		if (open) {
@@ -25,12 +35,27 @@
 		}
 	});
 
+	$effect(() => {
+		if (isPDFShare) {
+			const data = pdfShare.data;
+			if (data.amount !== null) {
+				form.amount = data.amount;
+			}
+			if (data.date !== null) {
+				form.date = data.date;
+			}
+		}
+	});
+
 	function handleSave() {
+		if (isPDFShare) {
+			pdfShare.roomId = null;
+			pdfShare.data = { amount: null, date: null };
+		}
 		onAdd(form);
 	}
 
-	async function handleOpenPDF() {
-		const data = await openPayment();
+	function handlePDFData(data: PaymentData | null) {
 		if (!data) {
 			return;
 		}
@@ -38,8 +63,27 @@
 			form.amount = data.amount;
 		}
 		if (data.date !== null) {
+			form.date = data.date;
 		}
-		// TODO
+	}
+
+	async function handlePDFInputChange() {
+		const files = pdfInput!.files;
+		if (!files) {
+			return;
+		}
+		const buffer = new Uint8Array(await files[0].arrayBuffer());
+		const data = await extractPayment(buffer);
+		handlePDFData(data);
+	}
+
+	async function handleOpenPDF() {
+		if (appState.tauri) {
+			const data = await openPayment();
+			handlePDFData(data);
+		} else {
+			pdfInput!.click();
+		}
 	}
 </script>
 
@@ -49,4 +93,23 @@
 		bind:description={form.description}
 		bind:date={form.date}
 	/>
+	{#if !appState.tauri}
+		<input
+			bind:this={pdfInput}
+			type="file"
+			accept="application/pdf"
+			onchange={handlePDFInputChange}
+		/>
+	{/if}
+	{#if !isPDFShare}
+		<Button color="neutral" type="button" onclick={handleOpenPDF}>
+			Open PDF
+		</Button>
+	{/if}
 </Modal>
+
+<style>
+	input[type='file'] {
+		display: none;
+	}
+</style>
