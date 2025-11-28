@@ -5,3 +5,4 @@ export {
 	default as RoomForm,
 	type Props as RoomFormProps
 } from './RoomForm.svelte';
+export { default as RoomSelectModal } from './RoomSelectModal.svelte';

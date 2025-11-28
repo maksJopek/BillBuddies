@@ -2,6 +2,7 @@ import { downloadDir } from '@tauri-apps/api/path';
 import { readFile } from '@tauri-apps/plugin-fs';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
+import { formatDateStandard } from '$lib/date';
 
 GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
@@ -28,7 +29,7 @@ function detectBank(text: string[]): BankType | null {
 
 export interface PaymentData {
 	amount: number | null;
-	date: Date | null;
+	date: string | null;
 }
 
 const ING_AMOUNT_LABEL = 'Amount';
@@ -48,7 +49,7 @@ function extractINGPaymentData(text: string[]): PaymentData {
 		} else if (nextDate) {
 			const date = Date.parse(item.split('.').reverse().join('-'));
 			if (!Number.isNaN(date)) {
-				data.date = new Date(date);
+				data.date = formatDateStandard(new Date(date));
 			}
 			nextDate = false;
 		} else if (item.includes(ING_AMOUNT_LABEL)) {
@@ -76,7 +77,7 @@ function extractPKOPaymentData(text: string[]): PaymentData {
 		} else if (item.startsWith(PKO_DATE_PREFIX)) {
 			const date = Date.parse(item.substring(PKO_DATE_PREFIX.length));
 			if (!Number.isNaN(date)) {
-				data.date = new Date(date);
+				data.date = formatDateStandard(new Date(date));
 			}
 		}
 	}
@@ -103,7 +104,7 @@ function extractPekaoPaymentData(text: string[]): PaymentData {
 		} else if (nextDate) {
 			const date = Date.parse(item.split('/').reverse().join('-'));
 			if (!Number.isNaN(date)) {
-				data.date = new Date(date);
+				data.date = formatDateStandard(new Date(date));
 			}
 			nextDate = false;
 		} else if (item.includes(PEKAO_AMOUNT_LABEL)) {
@@ -133,17 +134,21 @@ function extractPaymentData(text: string[]): PaymentData {
 	}
 }
 
-export async function extractPayment(
-	file: string
-): Promise<PaymentData | null> {
-	const buffer = await readFile(file);
-	const pdf = await getDocument(buffer).promise;
+export async function extractPayment(file: Uint8Array<ArrayBuffer>) {
+	const pdf = await getDocument(file).promise;
 	const page = await pdf.getPage(1);
 	const content = await page.getTextContent();
 	const text = content.items
 		.map((item) => ('str' in item ? item.str : ''))
 		.filter((str) => str.trim() !== '');
 	return extractPaymentData(text);
+}
+
+export async function extractPaymentFile(
+	file: string
+): Promise<PaymentData | null> {
+	const buffer = await readFile(file);
+	return extractPayment(buffer);
 }
 
 export async function openPayment(): Promise<PaymentData | null> {
@@ -156,5 +161,5 @@ export async function openPayment(): Promise<PaymentData | null> {
 	if (!path) {
 		return null;
 	}
-	return extractPayment(path);
+	return extractPaymentFile(path);
 }

@@ -30,6 +30,8 @@
 		letter-spacing: 0.25px;
 		font-size: 1rem;
 		font-weight: 500;
+		font-family: inherit;
+		color: inherit;
 	}
 
 	.primary {
@@ -48,7 +50,7 @@
 
 	.neutral:hover,
 	.neutral:focus-visible {
-		background-color: var(--background-hover);
+		background-color: var(--surface-hover);
 	}
 
 	.danger {

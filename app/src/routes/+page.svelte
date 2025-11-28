@@ -1,8 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
-	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
-	import { checkPendingIntent } from 'tauri-plugin-get-pdf-api';
-	import { extractPayment } from '$lib/pdf';
+	import type { PaymentData } from '$lib/pdf';
 	import { appState, addRoom, deleteRoom, editRoom } from '$lib/state';
 	import {
 		RoomCreateModal,
@@ -11,9 +8,9 @@
 		Button,
 		PlusIcon,
 		RoomCard,
-		List
+		List,
+		Balance
 	} from '$lib/components';
-	import Balance from '$lib/components/shared/Balance.svelte';
 
 	let roomCreateModalOpen = $state(false);
 	let roomEditModalOpen = $state(false);
@@ -50,29 +47,6 @@
 	function handleDeleteRoom() {
 		deleteRoom(roomEditModalId);
 	}
-
-	async function handleIntent() {
-		const intent = await checkPendingIntent();
-		if (!intent || !intent.uri) {
-			return;
-		}
-		await extractPayment(intent.uri);
-		// TODO
-	}
-
-	let unlisten: UnlistenFn | null = null;
-
-	onMount(async () => {
-		if (!('__TAURI__' in window)) {
-			return;
-		}
-		handleIntent();
-		unlisten = await listen(TauriEvent.WINDOW_FOCUS, handleIntent);
-	});
-
-	onDestroy(() => {
-		unlisten?.();
-	});
 </script>
 
 <div class="top">

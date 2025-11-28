@@ -63,16 +63,14 @@
 
 <style>
 	dialog {
+		color: inherit;
 		border: 2px solid var(--border);
 		border-radius: var(--border-radius);
 		background-color: var(--surface);
 		padding: 1.5rem;
 		width: 90%;
 		max-width: 400px;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		margin-inline: auto;
+		margin: auto;
 	}
 
 	dialog::backdrop {
@@ -92,6 +90,6 @@
 	.buttons {
 		display: flex;
 		gap: 1rem;
-		margin-top: 2rem;
+		margin-top: 1rem;
 	}
 </style>

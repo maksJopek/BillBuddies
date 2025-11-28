@@ -1,0 +1,18 @@
+.Input {
+	width: 100%;
+	color-scheme: dark;
+	padding: 0.75rem;
+	border: 2px solid var(--border);
+	border-radius: var(--border-radius);
+	font-size: 1rem;
+	font-family: inherit;
+	color: inherit;
+	outline: none;
+	transition: border-color 0.2s ease;
+	background-color: transparent;
+}
+
+Input:hover,
+Input:focus-visible {
+	border-color: var(--primary-hover);
+}
