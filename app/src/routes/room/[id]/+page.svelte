@@ -4,10 +4,7 @@
 		appState,
 		addExpense,
 		deleteExpense,
-		editExpense,
-		user1Id,
-		user2Id,
-		user3Id
+		editExpense
 	} from '$lib/state';
 	import {
 		ExpenseBalance,
@@ -73,14 +70,7 @@
 		<span>Nowy wydatek</span>
 	</Button>
 </div>
-<ExpenseBalance
-	{roomId}
-	data={[
-		{ from: user1Id, to: user2Id, amount: 45.5 },
-		{ from: user2Id, to: user3Id, amount: -23 },
-		{ from: user3Id, to: user1Id, amount: 12.43 }
-	]}
-/>
+<ExpenseBalance {roomId} data={[]} />
 <List>
 	{#each data.room.expenses as expense}
 		<ExpenseCard
