@@ -11,17 +11,17 @@
 
 	let { open = $bindable(false), id, onEdit, onDelete }: Props = $props();
 
-	let form = $state<RoomFormProps>({ name: '' });
+	let name = $state('');
 
 	$effect(() => {
 		const r = findRoom(id);
 		if (r) {
-			form.name = r.name;
+			name = r.name;
 		}
 	});
 
 	function handleSave() {
-		onEdit(form);
+		onEdit({ name });
 	}
 
 	function handleCancel() {
@@ -37,5 +37,5 @@
 	onSave={handleSave}
 	onCancel={handleCancel}
 >
-	<RoomForm bind:name={form.name} />
+	<RoomForm bind:name />
 </Modal>

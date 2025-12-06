@@ -55,7 +55,6 @@
 	let unlisten: UnlistenFn | null = null;
 
 	onMount(async () => {
-		await loadData();
 		if (!appState.tauri) {
 			return;
 		}

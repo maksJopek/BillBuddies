@@ -2,12 +2,15 @@ package handler
 
 import (
 	"errors"
+	"io"
 	"log"
 	"net"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/maksJopek/BillBuddies/server/database"
 	"github.com/maksJopek/BillBuddies/server/room"
 )
 
@@ -101,4 +104,52 @@ loop:
 
 func (ws *WebSocket) Close() {
 	ws.manager.Close()
+}
+
+func RoomRouter() http.Handler {
+	r := chi.NewRouter()
+	r.Get("/{roomUuid}", func(w http.ResponseWriter, r *http.Request) {
+		roomUuid := chi.URLParam(r, "roomUuid")
+		db := r.Context().Value("db").(*database.DB)
+
+		room, err := database.GetRoom(db, roomUuid)
+		if err != nil {
+			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
+		} else {
+			w.Write([]byte(room))
+		}
+	})
+	r.Post("/{roomUuid}", func(w http.ResponseWriter, r *http.Request) {
+		roomUuid := chi.URLParam(r, "roomUuid")
+		db := r.Context().Value("db").(*database.DB)
+		err := database.CreateRoom(db, roomUuid, r.Body)
+		if err != nil {
+			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
+		} else {
+			io.WriteString(w, http.StatusText(http.StatusOK))
+		}
+	})
+	r.Patch("/{roomUuid}", func(w http.ResponseWriter, r *http.Request) {
+		roomUuid := chi.URLParam(r, "roomUuid")
+		db := r.Context().Value("db").(*database.DB)
+
+		err := database.UpdateRoom(db, roomUuid, r.Body)
+		if err != nil {
+			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
+		} else {
+			io.WriteString(w, http.StatusText(http.StatusOK))
+		}
+	})
+	r.Delete("/{roomUuid}", func(w http.ResponseWriter, r *http.Request) {
+		roomUuid := chi.URLParam(r, "roomUuid")
+		db := r.Context().Value("db").(*database.DB)
+
+		err := database.DeleteRoom(db, roomUuid)
+		if err != nil {
+			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
+		} else {
+			io.WriteString(w, http.StatusText(http.StatusOK))
+		}
+	})
+	return r
 }

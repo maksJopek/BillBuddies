@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/maksJopek/BillBuddies/server/database"
 	"github.com/maksJopek/BillBuddies/server/handler"
 )
@@ -26,12 +27,20 @@ func run() error {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"https://jopek.eu", "http://localhost:1420"},
+		AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
+		MaxAge:         300,
+	}))
+	r.Use(middleware.WithValue("db", db))
+	r.Mount("/room", handler.RoomRouter())
 	r.Method("GET", "/ws", ws)
 	server := &http.Server{
 		Addr:    ":8000",
 		Handler: r,
 	}
 	done := make(chan error, 1)
+	log.Println("Server started on :8000")
 	go func() {
 		interrupt := make(chan os.Signal, 1)
 		signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
