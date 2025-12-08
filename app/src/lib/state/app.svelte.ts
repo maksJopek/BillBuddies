@@ -21,7 +21,9 @@ export interface Room {
 	id: string;
 	name: string;
 	balance: number;
-	users: User[];
+	users: {
+		[uuid: string]: /* name */ string;
+	};
 	expenses: Expense[];
 }
 
@@ -59,10 +61,19 @@ function saveAppStateToLocalStorage() {
 	);
 }
 
-function calcBalance(room: Omit<Room, 'balance'>) {
-	const neg = Math.random() > 0.5 ? -1 : 1;
-	const amount = room.expenses[0]?.amount ?? 0;
-	return Math.random() * 5 * amount * neg;
+function calcRoomBalance(room: Omit<Room, 'balance'>) {
+	let wholeSum = 0,
+		mySum = 0;
+	const users = new Set<string>();
+	for (const expense of room.expenses) {
+		users.add(expense.paidBy);
+		wholeSum += expense.amount;
+		if (expense.paidBy === appState.account.id) {
+			mySum += expense.amount;
+		}
+	}
+
+	return mySum - wholeSum / users.size;
 }
 
 async function request(url: string, options?: Partial<RequestInit>) {
@@ -84,7 +95,7 @@ export async function loadData() {
 	const promises = roomUUIDs.map(async (uuid) => {
 		const room = decrypt(await request('/room/' + uuid));
 		room.id = uuid;
-		room.balance = calcBalance(room);
+		room.balance = calcRoomBalance(room);
 		return room;
 	});
 	appState.rooms = await Promise.all(promises);
@@ -106,9 +117,10 @@ export async function saveRoomToDB(room: Room) {
 		body: encrypt(room)
 	});
 }
-export async function addRoom(room: Room & { id?: string }) {
-	await saveRoomToDB(room);
-	appState.rooms.push(room);
+export async function addRoom(room: WithoutID<Room>) {
+	const r = room as unknown as Room;
+	await saveRoomToDB(r);
+	appState.rooms.push(r);
 	saveAppStateToLocalStorage();
 }
 
@@ -157,39 +169,21 @@ export async function deleteExpense(roomId: string, expenseId: string) {
 	await saveRoomToDB(r);
 }
 
-export function findUser(roomId: string, userId: string) {
+export function findUserName(roomId: string, userId: string) {
 	const r = findRoom(roomId);
-	return r ? (r.users.find((u) => u.id === userId) ?? null) : null;
+	return r?.users[userId] ?? null;
 }
 
-export async function editUser(
-	roomId: string,
-	userId: string,
-	user: PartialWithoutID<User>
-) {
-	Object.assign(findUser(roomId, userId)!, user);
-	await saveRoomToDB(findRoom(roomId)!);
-}
-
-export async function tryEditUser(
-	roomId: string,
-	userId: string,
-	user: PartialWithoutID<User>
-) {
-	const u = findUser(roomId, userId);
-	if (u) {
-		Object.assign(u, user);
-		await saveRoomToDB(findRoom(roomId)!);
-	}
-}
-
-export function editAccount(account: PartialWithoutID<User>) {
+export async function editAccount(account: PartialWithoutID<User>) {
 	Object.assign(appState.account, account);
 	localStorage.setItem(
 		LOCAL_STORAGE_ACCOUNT_KEY,
 		JSON.stringify(appState.account)
 	);
+	const promises = [];
 	for (const room of appState.rooms) {
-		tryEditUser(room.id, appState.account.id, account);
+		room.users[appState.account.id] = account.name!;
+		promises.push(saveRoomToDB(room));
 	}
+	await Promise.all(promises);
 }

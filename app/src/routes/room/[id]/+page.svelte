@@ -70,7 +70,7 @@
 		<span>Nowy wydatek</span>
 	</Button>
 </div>
-<ExpenseBalance {roomId} data={[]} />
+<ExpenseBalance {roomId} />
 <List>
 	{#each data.room.expenses as expense}
 		<ExpenseCard

@@ -2,12 +2,19 @@
 	interface Props {
 		amount: number;
 		plusSign?: boolean;
+		noColor?: boolean;
 	}
 
-	let { amount, plusSign }: Props = $props();
+	let { amount, plusSign, noColor }: Props = $props();
+	const spanClass = $derived.by(() => {
+		if (noColor === true) {
+			return 'zero';
+		}
+		return amount > 0 ? 'pos' : 'neg';
+	});
 </script>
 
-<span class:pos={amount > 0} class:zero={amount === 0} class:neg={amount < 0}>
+<span class={spanClass}>
 	{plusSign && amount > 0 ? '+' : ''}{amount.toFixed(2)}zł
 </span>
 
