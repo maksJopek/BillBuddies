@@ -1,37 +1,84 @@
 <script lang="ts">
-	import { findUser } from '$lib/state';
+	import { appState, findRoom } from '$lib/state';
 	import { Balance } from '$lib/components';
 
 	interface Entry {
 		from: string;
 		to: string;
 		amount: number;
+		own: boolean;
 	}
 
 	interface Props {
 		roomId: string;
-		data: Entry[];
 	}
 
-	let { roomId, data }: Props = $props();
+	let { roomId }: Props = $props();
+	const room = $derived(findRoom(roomId)!);
+	const currentUserId = appState.account.id;
 
-	let resolved: Entry[] = $derived.by(() =>
-		data.map(({ from, to, amount }) => ({
-			from: findUser(roomId, from)!.name,
-			to: findUser(roomId, to)!.name,
-			amount
-		}))
-	);
+	let resolved = $derived.by(() => {
+		let wholeSum = 0;
+		let userSums = { ...room.users } as unknown as Record<string, number>;
+		for (const userId in userSums) {
+			userSums[userId] = 0;
+		}
+
+		for (const expense of room.expenses) {
+			userSums[expense.paidBy] += expense.amount;
+			wholeSum += expense.amount;
+		}
+
+		const avgSum = wholeSum / Object.keys(userSums).length;
+
+		function* getMaxEntry() {
+			while (true) {
+				const maxSum = Math.max(...Object.values(userSums));
+				const maxUser = Object.entries(userSums).find(
+					([_, sum]) => sum === maxSum
+				)![0];
+				const minSum = Math.min(...Object.values(userSums));
+				const minUser = Object.entries(userSums).find(
+					([_, sum]) => sum === minSum
+				)![0];
+
+				let toReturn = avgSum - minSum;
+				if (maxSum - avgSum < toReturn) {
+					toReturn = maxSum - avgSum;
+				}
+
+				if (toReturn === 0) {
+					return;
+				}
+
+				userSums[maxUser] -= toReturn;
+				userSums[minUser] += toReturn;
+
+				if (minUser === currentUserId) {
+					toReturn *= -1;
+				}
+
+				yield {
+					from: minUser,
+					to: maxUser,
+					amount: toReturn,
+					own: maxUser === currentUserId || minUser === currentUserId
+				} as Entry;
+			}
+		}
+
+		return getMaxEntry();
+	});
 </script>
 
 <div class="balance">
 	{#each resolved as e}
 		<div class="entry">
-			<span>{e.from}</span>
+			<span>{room.users[e.from]}</span>
 			<span>→</span>
-			<span>{e.to}</span>
+			<span>{room.users[e.to]}</span>
 			<span class="flex"></span>
-			<Balance amount={e.amount} plusSign />
+			<Balance amount={e.amount} plusSign={e.own} noColor={!e.own} />
 		</div>
 	{/each}
 </div>

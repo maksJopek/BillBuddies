@@ -28,7 +28,7 @@
 		addRoom({
 			...room,
 			balance: 0,
-			users: [{ ...appState.account }],
+			users: { [appState.account.id]: appState.account.name },
 			expenses: []
 		});
 		roomCreateModalOpen = false;

@@ -26,8 +26,8 @@
 		settingsModalOpen = true;
 	}
 
-	function handleChangeSettings(username: string) {
-		editAccount({ name: username });
+	async function handleChangeSettings(username: string) {
+		await editAccount({ name: username });
 		settingsModalOpen = false;
 	}
 

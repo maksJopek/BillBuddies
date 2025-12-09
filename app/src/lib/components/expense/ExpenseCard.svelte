@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { findUser, type Expense } from '$lib/state';
+	import { findUserName, type Expense } from '$lib/state';
 	import { formatDatePretty } from '$lib/date';
 
 	interface Props {
@@ -12,9 +12,9 @@
 
 	let meta = $derived.by(() => {
 		let result = '';
-		const u = findUser(roomId, expense.paidBy);
-		if (u) {
-			result += `${u.name} · `;
+		const name = findUserName(roomId, expense.paidBy);
+		if (name) {
+			result += `${name} · `;
 		}
 		result += formatDatePretty(new Date(expense.date));
 		return result;
