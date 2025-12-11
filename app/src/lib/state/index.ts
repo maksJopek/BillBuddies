@@ -1,2 +1,2 @@
 export * from './app.svelte';
-export * from './pdf.svelte';
+export * from './payment.svelte';

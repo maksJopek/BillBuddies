@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { pdfShare, appState } from '$lib/state';
+	import { paymentShare, appState } from '$lib/state';
 	import {
 		Modal,
 		ExpenseForm,
@@ -23,7 +23,7 @@
 
 	let pdfInput = $state<HTMLInputElement | null>(null);
 
-	const isPDFShare = $derived(pdfShare.roomId !== null);
+	const isPaymentShare = $derived(paymentShare.roomId !== null);
 
 	$effect(() => {
 		if (open) {
@@ -36,8 +36,8 @@
 	});
 
 	$effect(() => {
-		if (isPDFShare) {
-			const data = pdfShare.data;
+		if (isPaymentShare) {
+			const data = paymentShare.data;
 			if (data.amount !== null) {
 				form.amount = data.amount;
 			}
@@ -48,9 +48,9 @@
 	});
 
 	function handleSave() {
-		if (isPDFShare) {
-			pdfShare.roomId = null;
-			pdfShare.data = { amount: null, date: null };
+		if (isPaymentShare) {
+			paymentShare.roomId = null;
+			paymentShare.data = { amount: null, date: null };
 		}
 		onAdd(form);
 	}
@@ -101,7 +101,7 @@
 			onchange={handlePDFInputChange}
 		/>
 	{/if}
-	{#if !isPDFShare}
+	{#if !isPaymentShare}
 		<Button color="neutral" type="button" onclick={handleOpenPDF}>
 			Open PDF
 		</Button>

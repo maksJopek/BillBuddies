@@ -10,7 +10,7 @@
 		SettingsIcon,
 		RoomSelectModal
 	} from '$lib/components';
-	import { pdfShare, appState, editAccount, loadData } from '$lib/state';
+	import { paymentShare, appState, editAccount, loadData } from '$lib/state';
 	import '../app.css';
 
 	let { children } = $props();
@@ -27,13 +27,13 @@
 	}
 
 	async function handleChangeSettings(username: string) {
-		await editAccount({ name: username });
+		await editAccount(username);
 		settingsModalOpen = false;
 	}
 
 	function handleSelectRoom(id: string) {
-		pdfShare.roomId = id;
-		pdfShare.data = roomSelectModalPayment;
+		paymentShare.roomId = id;
+		paymentShare.data = roomSelectModalPayment;
 		roomSelectModalOpen = false;
 		roomSelectModalPayment = { amount: null, date: null };
 		goto(`/room/${id}`);
@@ -55,6 +55,7 @@
 	let unlisten: UnlistenFn | null = null;
 
 	onMount(async () => {
+		await loadData();
 		if (!appState.tauri) {
 			return;
 		}

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -23,10 +22,9 @@ func New(path string) (*DB, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 	if _, err = db.Exec(`CREATE TABLE IF NOT EXISTS room (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	uuid TEXT NOT NULL UNIQUE,
-	data TEXT NOT NULL,
-	created_at INTEGER NOT NULL
+	id TEXT PRIMARY KEY,
+	iv TEXT NOT NULL,
+	data TEXT NOT NULL
 )
 		`); err != nil {
 		return nil, fmt.Errorf("failed to initialize database rooms table: %w", err)
@@ -47,18 +45,19 @@ func (e *roomCrudError) Error() string {
 }
 
 type Room struct {
-	Uuid string `json:"uuid,omitempty"`
+	ID   string `json:"id,omitempty"`
+	IV   string `json:"iv"`
 	Data string `json:"data"`
 }
 
-func CreateRoom(db *DB, roomUuid string, roomData io.ReadCloser) *roomCrudError {
+func CreateRoom(db *DB, id string, input io.ReadCloser) *roomCrudError {
 	var room Room
-	err := json.NewDecoder(roomData).Decode(&room)
-	if err != nil || room.Data == "" || roomUuid == "" {
+	err := json.NewDecoder(input).Decode(&room)
+	if err != nil || room.Data == "" || id == "" {
 		return &roomCrudError{400}
 	}
 
-	_, err = db.inner.Exec("INSERT INTO room (uuid, data, created_at) VALUES (?, ?, ?)", roomUuid, room.Data, time.Now())
+	_, err = db.inner.Exec("INSERT INTO room (id, iv, data) VALUES (?, ?, ?)", id, room.IV, room.Data)
 	if err != nil {
 		return &roomCrudError{500}
 	}
@@ -66,24 +65,23 @@ func CreateRoom(db *DB, roomUuid string, roomData io.ReadCloser) *roomCrudError 
 	return nil
 }
 
-func GetRoom(db *DB, roomUuid string) (string, *roomCrudError) {
-	var data string
-	err := db.inner.QueryRow("SELECT data FROM room WHERE uuid = ?", roomUuid).Scan(&data)
+func GetRoom(db *DB, id string) (Room, *roomCrudError) {
+	var r Room
+	err := db.inner.QueryRow("SELECT iv, data FROM room WHERE id = ?", id).Scan(&r.IV, &r.Data)
 	if err != nil {
-		return "", &roomCrudError{404}
+		return Room{}, &roomCrudError{404}
 	}
-
-	return data, nil
+	return r, nil
 }
 
-func UpdateRoom(db *DB, roomUuid string, roomData io.ReadCloser) *roomCrudError {
+func UpdateRoom(db *DB, id string, input io.ReadCloser) *roomCrudError {
 	var room Room
-	err := json.NewDecoder(roomData).Decode(&room)
-	if err != nil || room.Data == "" || room.Uuid != "" {
+	err := json.NewDecoder(input).Decode(&room)
+	if err != nil || room.Data == "" || room.ID != "" {
 		return &roomCrudError{400}
 	}
 
-	res, err := db.inner.Exec("UPDATE room SET data = ? WHERE uuid = ?", room.Data, roomUuid)
+	res, err := db.inner.Exec("UPDATE room SET iv = ?, data = ? WHERE id = ?", room.IV, room.Data, id)
 	if err != nil {
 		return &roomCrudError{500}
 	}
@@ -95,8 +93,8 @@ func UpdateRoom(db *DB, roomUuid string, roomData io.ReadCloser) *roomCrudError 
 	return nil
 }
 
-func DeleteRoom(db *DB, roomUuid string) *roomCrudError {
-	res, err := db.inner.Exec("DELETE FROM room WHERE uuid = ?", roomUuid)
+func DeleteRoom(db *DB, id string) *roomCrudError {
+	res, err := db.inner.Exec("DELETE FROM room WHERE id = ?", id)
 	if err != nil {
 		return &roomCrudError{500}
 	}

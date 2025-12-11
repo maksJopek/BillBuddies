@@ -1,26 +1,26 @@
 <script lang="ts">
-	import { Modal, RoomForm, type RoomFormProps } from '$lib/components';
+	import { Modal, RoomForm } from '$lib/components';
 
 	interface Props {
 		open: boolean;
-		onCreate: (room: RoomFormProps) => any;
+		onCreate: (name: string) => any;
 	}
 
 	let { open = $bindable(false), onCreate }: Props = $props();
 
-	let form = $state<RoomFormProps>({ name: '' });
+	let name = $state('');
 
 	$effect(() => {
 		if (open) {
-			form.name = '';
+			name = '';
 		}
 	});
 
 	function handleSave() {
-		onCreate(form);
+		onCreate(name);
 	}
 </script>
 
 <Modal bind:open title="Stwórz nowy pokój" onSave={handleSave}>
-	<RoomForm bind:name={form.name} />
+	<RoomForm bind:name />
 </Modal>

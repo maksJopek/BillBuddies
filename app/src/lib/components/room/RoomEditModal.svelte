@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { Modal, RoomForm, type RoomFormProps } from '$lib/components';
+	import { Modal, RoomForm } from '$lib/components';
 	import { findRoom } from '$lib/state';
 
 	interface Props {
 		open: boolean;
 		id: string;
-		onEdit: (room: RoomFormProps) => any;
+		onEdit: (name: string) => any;
 		onDelete: () => any;
 	}
 
@@ -21,7 +21,7 @@
 	});
 
 	function handleSave() {
-		onEdit({ name });
+		onEdit(name);
 	}
 
 	function handleCancel() {

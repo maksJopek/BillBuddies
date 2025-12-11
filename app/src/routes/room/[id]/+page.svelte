@@ -1,6 +1,6 @@
 <script lang="ts">
 	import {
-		pdfShare,
+		paymentShare,
 		appState,
 		addExpense,
 		deleteExpense,
@@ -28,7 +28,7 @@
 	const roomId = $derived(data.room.id);
 
 	$effect(() => {
-		if (pdfShare.roomId === roomId) {
+		if (paymentShare.roomId === roomId) {
 			expenseAddModalOpen = true;
 		}
 	});
@@ -37,8 +37,8 @@
 		expenseAddModalOpen = true;
 	}
 
-	function handleAddExpense(expense: ExpenseFormProps) {
-		addExpense(roomId, {
+	async function handleAddExpense(expense: ExpenseFormProps) {
+		await addExpense(roomId, {
 			...expense,
 			paidBy: appState.account.id
 		});
@@ -50,12 +50,12 @@
 		expenseEditModalId = id;
 	}
 
-	function handleEditExpense(expense: ExpenseFormProps) {
-		editExpense(roomId, expenseEditModalId, expense);
+	async function handleEditExpense(expense: ExpenseFormProps) {
+		await editExpense(roomId, expenseEditModalId, expense);
 	}
 
-	function handleDeleteExpense() {
-		deleteExpense(roomId, expenseEditModalId);
+	async function handleDeleteExpense() {
+		await deleteExpense(roomId, expenseEditModalId);
 	}
 </script>
 
@@ -70,7 +70,9 @@
 		<span>Nowy wydatek</span>
 	</Button>
 </div>
-<ExpenseBalance {roomId} />
+{#if data.room.expenses.length >= 2}
+	<ExpenseBalance {roomId} />
+{/if}
 <List>
 	{#each data.room.expenses as expense}
 		<ExpenseCard
