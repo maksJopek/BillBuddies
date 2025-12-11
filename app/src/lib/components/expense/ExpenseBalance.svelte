@@ -14,13 +14,14 @@
 	}
 
 	let { roomId }: Props = $props();
-	const room = $derived(findRoom(roomId)!);
+	const room = $derived(findRoom(roomId));
 	const currentUserId = appState.account.id;
 
 	let resolved = $derived.by(() => {
 		let wholeSum = 0;
-		let userSums = { ...room.users } as unknown as Record<string, number>;
-		for (const userId in userSums) {
+		let userSums: Record<string, number> = {};
+
+		for (const userId in room.users) {
 			userSums[userId] = 0;
 		}
 
@@ -37,6 +38,7 @@
 				const maxUser = Object.entries(userSums).find(
 					([_, sum]) => sum === maxSum
 				)![0];
+
 				const minSum = Math.min(...Object.values(userSums));
 				const minUser = Object.entries(userSums).find(
 					([_, sum]) => sum === minSum

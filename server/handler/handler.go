@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"log"
@@ -108,43 +109,43 @@ func (ws *WebSocket) Close() {
 
 func RoomRouter() http.Handler {
 	r := chi.NewRouter()
-	r.Get("/{roomUuid}", func(w http.ResponseWriter, r *http.Request) {
-		roomUuid := chi.URLParam(r, "roomUuid")
+	r.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
 		db := r.Context().Value("db").(*database.DB)
 
-		room, err := database.GetRoom(db, roomUuid)
+		room, err := database.GetRoom(db, id)
 		if err != nil {
 			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
 		} else {
-			w.Write([]byte(room))
+			json.NewEncoder(w).Encode(room)
 		}
 	})
-	r.Post("/{roomUuid}", func(w http.ResponseWriter, r *http.Request) {
-		roomUuid := chi.URLParam(r, "roomUuid")
+	r.Post("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
 		db := r.Context().Value("db").(*database.DB)
-		err := database.CreateRoom(db, roomUuid, r.Body)
-		if err != nil {
-			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
-		} else {
-			io.WriteString(w, http.StatusText(http.StatusOK))
-		}
-	})
-	r.Patch("/{roomUuid}", func(w http.ResponseWriter, r *http.Request) {
-		roomUuid := chi.URLParam(r, "roomUuid")
-		db := r.Context().Value("db").(*database.DB)
-
-		err := database.UpdateRoom(db, roomUuid, r.Body)
+		err := database.CreateRoom(db, id, r.Body)
 		if err != nil {
 			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
 		} else {
 			io.WriteString(w, http.StatusText(http.StatusOK))
 		}
 	})
-	r.Delete("/{roomUuid}", func(w http.ResponseWriter, r *http.Request) {
-		roomUuid := chi.URLParam(r, "roomUuid")
+	r.Patch("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
 		db := r.Context().Value("db").(*database.DB)
 
-		err := database.DeleteRoom(db, roomUuid)
+		err := database.UpdateRoom(db, id, r.Body)
+		if err != nil {
+			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
+		} else {
+			io.WriteString(w, http.StatusText(http.StatusOK))
+		}
+	})
+	r.Delete("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		db := r.Context().Value("db").(*database.DB)
+
+		err := database.DeleteRoom(db, id)
 		if err != nil {
 			http.Error(w, http.StatusText(err.HttpCode), err.HttpCode)
 		} else {

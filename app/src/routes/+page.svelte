@@ -1,10 +1,8 @@
 <script lang="ts">
-	import type { PaymentData } from '$lib/pdf';
-	import { appState, addRoom, deleteRoom, editRoom } from '$lib/state';
+	import { appState, createRoom, deleteRoom, editRoom } from '$lib/state';
 	import {
 		RoomCreateModal,
 		RoomEditModal,
-		type RoomFormProps,
 		Button,
 		PlusIcon,
 		RoomCard,
@@ -24,13 +22,8 @@
 		roomCreateModalOpen = true;
 	}
 
-	function handleCreateRoom(room: RoomFormProps) {
-		addRoom({
-			...room,
-			balance: 0,
-			users: { [appState.account.id]: appState.account.name },
-			expenses: []
-		});
+	async function handleCreateRoom(name: string) {
+		await createRoom(name);
 		roomCreateModalOpen = false;
 	}
 
@@ -39,13 +32,13 @@
 		roomEditModalId = id;
 	}
 
-	function handleEditRoom(room: RoomFormProps) {
-		editRoom(roomEditModalId, room);
+	async function handleEditRoom(name: string) {
+		await editRoom(roomEditModalId, name);
 		roomEditModalOpen = false;
 	}
 
-	function handleDeleteRoom() {
-		deleteRoom(roomEditModalId);
+	async function handleDeleteRoom() {
+		await deleteRoom(roomEditModalId);
 	}
 </script>
 
