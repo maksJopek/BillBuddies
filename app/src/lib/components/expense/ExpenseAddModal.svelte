@@ -15,23 +15,19 @@
 
 	let { open = $bindable(false), onAdd }: Props = $props();
 
-	let form = $state<ExpenseFormProps>({
-		amount: 0,
+	const getEmptyForm = () => ({
+		amount: null as unknown as number,
 		description: '',
-		date: ''
+		date: new Date().toISOString().slice(0, -8)
 	});
-
+	let form = $state<ExpenseFormProps>(getEmptyForm());
 	let pdfInput = $state<HTMLInputElement | null>(null);
 
 	const isPaymentShare = $derived(paymentShare.roomId !== null);
 
 	$effect(() => {
 		if (open) {
-			form = {
-				amount: 0,
-				date: '',
-				description: ''
-			};
+			form = getEmptyForm();
 		}
 	});
 

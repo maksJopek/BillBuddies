@@ -8,7 +8,8 @@
 		SettingsModal,
 		IconButton,
 		SettingsIcon,
-		RoomSelectModal
+		RoomSelectModal,
+		Toast
 	} from '$lib/components';
 	import { paymentShare, appState, editAccount, loadData } from '$lib/state';
 	import '../app.css';
@@ -21,6 +22,7 @@
 		amount: null,
 		date: null
 	});
+	let toast: Toast;
 
 	function handleOpenSettings() {
 		settingsModalOpen = true;
@@ -55,6 +57,7 @@
 	let unlisten: UnlistenFn | null = null;
 
 	onMount(async () => {
+		appState.showToast = toast.show;
 		await loadData();
 		if (!appState.tauri) {
 			return;
@@ -87,6 +90,8 @@
 	payment={roomSelectModalPayment}
 	onSelect={handleSelectRoom}
 />
+
+<Toast bind:this={toast} />
 
 <style>
 	.app {
