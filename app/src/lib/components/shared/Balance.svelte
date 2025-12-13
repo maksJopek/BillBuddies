@@ -10,6 +10,9 @@
 		if (noColor === true) {
 			return 'zero';
 		}
+		if (amount === 0) {
+			return 'zero';
+		}
 		return amount > 0 ? 'pos' : 'neg';
 	});
 </script>

@@ -4,7 +4,8 @@
 		appState,
 		addExpense,
 		deleteExpense,
-		editExpense
+		editExpense,
+		shareRoom
 	} from '$lib/state';
 	import {
 		ExpenseBalance,
@@ -16,7 +17,8 @@
 		PlusIcon,
 		IconLink,
 		ArrowLeftIcon,
-		List
+		List,
+		ShareIcon
 	} from '$lib/components';
 
 	let { data } = $props();
@@ -57,6 +59,12 @@
 	async function handleDeleteExpense() {
 		await deleteExpense(roomId, expenseEditModalId);
 	}
+
+	async function handleShareRoom() {
+		const url = location.origin + '#newRoomId=' + (await shareRoom(roomId));
+		await navigator.clipboard.writeText(url);
+		appState.showToast('Link skopiowany');
+	}
 </script>
 
 <div class="top">
@@ -65,10 +73,14 @@
 	</IconLink>
 	<h1>{data.room.name}</h1>
 	<div class="flex"></div>
-	<Button onclick={handleOpenExpenseAddModal}>
-		<PlusIcon />
-		<span>Nowy wydatek</span>
-	</Button>
+	<div class="btns">
+		<Button onclick={handleOpenExpenseAddModal}>
+			<PlusIcon />
+		</Button>
+		<Button onclick={handleShareRoom}>
+			<ShareIcon />
+		</Button>
+	</div>
 </div>
 {#if data.room.expenses.length >= 2}
 	<ExpenseBalance {roomId} />
@@ -103,5 +115,10 @@
 
 	.flex {
 		flex: 1;
+	}
+
+	.btns {
+		display: flex;
+		gap: 2rem;
 	}
 </style>
