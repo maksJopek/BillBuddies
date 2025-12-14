@@ -26,6 +26,7 @@ export interface AppState {
 	loading: Promise<void> | null;
 	loaded: boolean;
 	tauri: boolean;
+	showToast: (msg: string) => void;
 }
 
 function defaultAccount() {
@@ -44,7 +45,8 @@ export const appState = $state<AppState>({
 	account: storage.getAccount() ?? defaultAccount(),
 	loading: null,
 	loaded: false,
-	tauri: '__TAURI_INTERNALS__' in window
+	tauri: '__TAURI_INTERNALS__' in window,
+	showToast: null as unknown as AppState['showToast']
 });
 
 function calcRoomBalance(room: crypto.Room) {
@@ -53,15 +55,14 @@ function calcRoomBalance(room: crypto.Room) {
 	}
 	let wholeSum = 0,
 		mySum = 0;
-	const users = new Set<string>();
+	const users = Object.keys(room.users);
 	for (const expense of room.expenses) {
-		users.add(expense.paidBy);
 		wholeSum += expense.amount;
 		if (expense.paidBy === appState.account.id) {
 			mySum += expense.amount;
 		}
 	}
-	return mySum - wholeSum / users.size;
+	return mySum - wholeSum / users.length;
 }
 
 async function loadKeys() {
@@ -83,11 +84,29 @@ async function loadRooms() {
 	appState.loaded = true;
 }
 
-export function loadData() {
+async function checkLocationHash() {
+	const check = async () => {
+		if (location.hash.startsWith('#newRoomId=')) {
+			const params = new URLSearchParams(location.hash.slice(1));
+			await importRoom(params.get('newRoomId')!);
+			params.delete('newRoomId');
+			if (params.size === 0) {
+				location.hash = '';
+			} else {
+				location.hash = '#' + params.toString();
+			}
+		}
+	};
+	await check();
+	window.onhashchange = check;
+}
+
+export async function loadData() {
 	if (!appState.loading) {
 		appState.loading = loadRooms();
 	}
-	return appState.loading;
+	await appState.loading;
+	await checkLocationHash();
 }
 
 export function tryFindRoom(id: string) {
@@ -98,10 +117,14 @@ export function findRoom(id: string) {
 	return tryFindRoom(id)!;
 }
 
-async function addRoom(room: crypto.Room, key: CryptoKey) {
+async function addRoom(room: crypto.Room, key: CryptoKey, id?: string) {
 	const encrypted = await crypto.encryptRoom(room, key);
-	const id = crypto.getRandomUUID();
-	await api.createRoom(id, encrypted);
+	if (id === undefined) {
+		id = crypto.getRandomUUID();
+		await api.createRoom(id, encrypted);
+	} else {
+		await api.editRoom(id, encrypted);
+	}
 	const r: Room = {
 		...room,
 		id,
@@ -126,9 +149,14 @@ async function saveRoom(id: string, data: Partial<crypto.Room>) {
 
 export async function importRoom(token: string) {
 	const { id, key } = await crypto.parseRoomToken(token);
+	if (tryFindRoom(id) !== null) {
+		return;
+	}
 	const { iv, data } = await api.getRoom(id);
 	const room = await crypto.decryptRoom({ iv, data }, key);
-	return addRoom(room, key);
+	room.users[appState.account.id] = appState.account.name;
+	await addRoom(room, key, id);
+	appState.showToast(`Pokój '${room.name}' dodany`);
 }
 
 export async function createRoom(name: string) {
