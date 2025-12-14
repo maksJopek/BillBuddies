@@ -82,7 +82,7 @@
 		</Button>
 	</div>
 </div>
-{#if data.room.expenses.length >= 2}
+{#if Object.keys(data.room.users).length >= 2}
 	<ExpenseBalance {roomId} />
 {/if}
 <List>

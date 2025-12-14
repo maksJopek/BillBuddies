@@ -23,7 +23,6 @@ func run() error {
 	}
 	defer db.Close()
 	ws := handler.NewWebSocket()
-	defer ws.Close()
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)

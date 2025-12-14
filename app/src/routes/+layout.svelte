@@ -13,6 +13,7 @@
 	} from '$lib/components';
 	import { paymentShare, appState, editAccount, loadData } from '$lib/state';
 	import '../app.css';
+	import { disconnectWS } from '$lib/websocket';
 
 	let { children } = $props();
 
@@ -67,6 +68,7 @@
 	});
 
 	onDestroy(() => {
+		disconnectWS();
 		unlisten?.();
 	});
 </script>
