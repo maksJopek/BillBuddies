@@ -1,7 +1,7 @@
 import * as crypto from './crypto';
 import * as storage from './storage';
 import * as api from './api';
-import { connectWS, listenOnRoom } from '../websocket.ts';
+import { connectWS, listenOnRoom } from '../websocket';
 
 export type WithoutID<T> = Omit<T, 'id'>;
 

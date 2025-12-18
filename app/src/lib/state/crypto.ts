@@ -28,12 +28,12 @@ function base64ToBytes(data: string) {
 	return new Uint8Array(Base64.toUint8Array(data));
 }
 
-function base64FromBytes(data: Uint8Array<ArrayBuffer>) {
-	return Base64.fromUint8Array(data);
+function base64FromBytes(data: Uint8Array<ArrayBuffer>, urlsafe?: boolean) {
+	return Base64.fromUint8Array(data, urlsafe);
 }
 
-export async function stringifyKey(key: CryptoKey) {
-	return base64FromBytes(await exportKey(key));
+export async function stringifyKey(key: CryptoKey, urlsafe?: boolean) {
+	return base64FromBytes(await exportKey(key), urlsafe);
 }
 
 export function parseKey(key: string) {
@@ -44,24 +44,20 @@ export function generateKey() {
 	return importKey(getRandomValues(KEY_SIZE));
 }
 
-interface StringRoomToken {
-	id: string;
-	key: string;
-}
-
 export interface RoomToken {
 	id: string;
 	key: CryptoKey;
 }
 
-export async function createRoomToken({ id, key }: RoomToken) {
-	const str: StringRoomToken = { id, key: await stringifyKey(key) };
-	return Base64.encodeURL(JSON.stringify(str));
+export async function createRoomToken(token: RoomToken) {
+	const id = Base64.encodeURL(token.id);
+	const key = await stringifyKey(token.key, true);
+	return `${id}.${key}`;
 }
 
 export async function parseRoomToken(token: string): Promise<RoomToken> {
-	const { id, key }: StringRoomToken = JSON.parse(Base64.decode(token));
-	return { id, key: await parseKey(key) };
+	const [id, key] = token.split('.');
+	return { id: Base64.decode(id), key: await parseKey(key) };
 }
 
 export interface Room {
