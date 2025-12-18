@@ -1,0 +1,12 @@
+[
+	{
+		"relation": ["delegate_permission/common.handle_all_urls"],
+		"target": {
+			"namespace": "android_app",
+			"package_name": "eu.jopek.bill_buddies",
+			"sha256_cert_fingerprints": [
+				"06:57:60:84:75:D8:5E:22:E7:60:2D:F8:42:77:66:F4:98:43:00:B2:47:24:BD:13:78:D2:63:66:5C:A3:02:18"
+			]
+		}
+	}
+]

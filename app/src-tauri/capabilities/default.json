@@ -10,6 +10,7 @@
     "opener:default",
     "dialog:default",
     "fs:default",
-    "get-pdf:default"
+    "get-pdf:default",
+    "deep-link:default"
   ]
 }

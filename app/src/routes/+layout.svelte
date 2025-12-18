@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
 	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
+	import {
+		getCurrent as getCurrentUrls,
+		onOpenUrl
+	} from '@tauri-apps/plugin-deep-link';
 	import { checkPendingIntent } from 'tauri-plugin-get-pdf-api';
 	import { goto } from '$app/navigation';
 	import { extractPaymentFile, type PaymentData } from '$lib/pdf';
@@ -42,6 +46,10 @@
 		goto(`/room/${id}`);
 	}
 
+	function handleOpenUrl(urls: string[]) {
+		// TODO
+	}
+
 	async function handleIntent() {
 		const intent = await checkPendingIntent();
 		if (!intent || !intent.uri) {
@@ -55,7 +63,8 @@
 		roomSelectModalPayment = data;
 	}
 
-	let unlisten: UnlistenFn | null = null;
+	let unlisten1: UnlistenFn | null = null;
+	let unlisten2: UnlistenFn | null = null;
 
 	onMount(async () => {
 		appState.showToast = toast.show;
@@ -63,13 +72,19 @@
 		if (!appState.tauri) {
 			return;
 		}
+		const urls = await getCurrentUrls();
+		if (urls) {
+			handleOpenUrl(urls);
+		}
+		unlisten1 = await onOpenUrl(handleOpenUrl);
 		handleIntent();
-		unlisten = await listen(TauriEvent.WINDOW_FOCUS, handleIntent);
+		unlisten2 = await listen(TauriEvent.WINDOW_FOCUS, handleIntent);
 	});
 
 	onDestroy(() => {
 		disconnectWS();
-		unlisten?.();
+		unlisten1?.();
+		unlisten2?.();
 	});
 </script>
 
