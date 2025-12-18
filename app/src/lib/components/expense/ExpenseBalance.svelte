@@ -33,7 +33,7 @@
 		const avgSum = wholeSum / Object.keys(userSums).length;
 
 		function* getMaxEntry() {
-			while (true) {
+			for (let i = 0; true; i++) {
 				const maxSum = Math.max(...Object.values(userSums));
 				const maxUser = Object.entries(userSums).find(
 					([_, sum]) => sum === maxSum
@@ -50,6 +50,9 @@
 				}
 
 				if (toReturn === 0) {
+					if (i === 0) {
+						yield null;
+					}
 					return;
 				}
 
@@ -76,11 +79,15 @@
 <div class="balance">
 	{#each resolved as e}
 		<div class="entry">
-			<span>{room.users[e.from]}</span>
-			<span>→</span>
-			<span>{room.users[e.to]}</span>
-			<span class="flex"></span>
-			<Balance amount={e.amount} plusSign={e.own} noColor={!e.own} />
+			{#if e === null}
+				<span>Wszyscy wydali po równo</span>
+			{:else}
+				<span>{room.users[e.from]}</span>
+				<span>→</span>
+				<span>{room.users[e.to]}</span>
+				<span class="flex"></span>
+				<Balance amount={e.amount} plusSign={e.own} noColor={!e.own} />
+			{/if}
 		</div>
 	{/each}
 </div>

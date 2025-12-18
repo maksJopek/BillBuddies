@@ -1,6 +1,7 @@
 import * as crypto from './crypto';
 import * as storage from './storage';
 import * as api from './api';
+import { connectWS, listenOnRoom } from '../websocket.ts';
 
 export type WithoutID<T> = Omit<T, 'id'>;
 
@@ -49,7 +50,7 @@ export const appState = $state<AppState>({
 	showToast: null as unknown as AppState['showToast']
 });
 
-function calcRoomBalance(room: crypto.Room) {
+export function calcRoomBalance(room: crypto.Room) {
 	if (room.expenses.length === 0) {
 		return 0;
 	}
@@ -77,6 +78,7 @@ async function loadRooms() {
 	const promises: Promise<Room>[] = Object.entries(appState.roomKeys).map(
 		async ([id, key]) => {
 			const room = await crypto.decryptRoom(await api.getRoom(id), key);
+			listenOnRoom(id);
 			return { ...room, id, balance: calcRoomBalance(room) };
 		}
 	);
@@ -102,6 +104,7 @@ async function checkLocationHash() {
 }
 
 export async function loadData() {
+	await connectWS();
 	if (!appState.loading) {
 		appState.loading = loadRooms();
 	}
@@ -133,6 +136,7 @@ async function addRoom(room: crypto.Room, key: CryptoKey, id?: string) {
 	appState.rooms.push(r);
 	appState.roomKeys[r.id] = key;
 	storage.setRoomKeys(appState.roomKeys);
+	listenOnRoom(id);
 	return id;
 }
 
@@ -174,8 +178,10 @@ export async function editRoom(id: string, name: string) {
 	await saveRoom(id, { name });
 }
 
-export async function deleteRoom(id: string) {
-	await api.deleteRoom(id);
+export async function deleteRoom(id: string, localOnly = false) {
+	if (localOnly === false) {
+		await api.deleteRoom(id);
+	}
 	appState.rooms = appState.rooms.filter((r) => r.id !== id);
 	delete appState.roomKeys[id];
 	storage.setRoomKeys(appState.roomKeys);

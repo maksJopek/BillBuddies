@@ -2,27 +2,23 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"log"
-	"net"
+	"sync"
+
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/maksJopek/BillBuddies/server/database"
-	"github.com/maksJopek/BillBuddies/server/room"
 )
 
 type WebSocket struct {
-	manager  *room.Manager
 	upgrader websocket.Upgrader
 }
 
 func NewWebSocket() *WebSocket {
 	return &WebSocket{
-		manager: room.NewManager(),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  4096,
 			WriteBufferSize: 4096,
@@ -33,78 +29,101 @@ func NewWebSocket() *WebSocket {
 	}
 }
 
+type wsMessage struct {
+	Type string `json:"type"`
+	Id   string `json:"id"`
+	Data string `json:"data,omitempty"`
+}
+
+var roomClients = make(map[string][]*websocket.Conn)
+var mutex = &sync.Mutex{}
+
+func remFromArr[T comparable](arr []T, el T) []T {
+	i := -1
+	for idx, c := range arr {
+		if c == el {
+			i = idx
+			break
+		}
+	}
+	if i == -1 {
+		return arr
+	}
+
+	arr[i] = arr[len(arr)-1]
+	return arr[:len(arr)-1]
+}
+
+func addClientToRoom(id string, conn *websocket.Conn) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if _, exists := roomClients[id]; exists == false {
+		roomClients[id] = make([]*websocket.Conn, 0)
+	}
+
+	roomClients[id] = append(roomClients[id], conn)
+}
+func removeClientFromRoom(id string, conn *websocket.Conn) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	if _, exists := roomClients[id]; exists == false {
+		return
+	}
+
+	roomClients[id] = remFromArr(roomClients[id], conn)
+	if len(roomClients[id]) == 0 {
+		delete(roomClients, id)
+	}
+}
+func removeClientFromAllRooms(conn *websocket.Conn) {
+	for id := range roomClients {
+		removeClientFromRoom(id, conn)
+	}
+}
+
 func (ws *WebSocket) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	conn, err := ws.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("failed to establish websocket connection: %s\n", err)
 		return
 	}
-	query := r.URL.Query()
-	if !query.Has("id") {
-		http.Error(w, "missing query parameter \"id\"", 400)
-		return
-	}
-	roomId, err := uuid.Parse(query.Get("id"))
-	if err != nil {
-		http.Error(w, "query parameter \"id\" is not valid uuid", 400)
-		return
-	}
-	sess := ws.manager.JoinRoom(roomId)
-	messages := make(chan []byte)
+
 	go func() {
 		for {
-			kind, msg, err := conn.ReadMessage()
+			var (
+				err error
+				msg wsMessage
+			)
+			_, message, err := conn.ReadMessage()
 			if err != nil {
-				if _, ok := err.(*websocket.CloseError); !ok {
-					log.Printf("failed to read websocket message: %s\n", err)
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					log.Println("Error reading message:", err)
 				}
 				break
 			}
-			if kind != websocket.TextMessage {
+
+			err = json.Unmarshal(message, &msg)
+			if err != nil {
+				log.Println("JSON Unmarshal error:", err)
 				break
 			}
-			messages <- msg
-		}
-		close(messages)
-	}()
-	go func() {
-		for {
-			msg := sess.RecvMessage()
-			if msg == nil {
-				break
-			}
-			if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
-				log.Printf("failed to write websocket message: %s\n", err)
-			}
-		}
-	}()
-	ctx := r.Context()
-loop:
-	for {
-		select {
-		case <-ctx.Done():
-			sess.LeaveRoom()
-			if err = conn.WriteMessage(
-				websocket.CloseMessage,
-				websocket.FormatCloseMessage(websocket.CloseGoingAway, "server is gracefully shutting down"),
-			); err != nil && !errors.Is(err, net.ErrClosed) {
-				log.Printf("failed to write websocket close message: %s\n", err)
-			}
-			break loop
-		case msg := <-messages:
-			if msg == nil {
-				sess.LeaveRoom()
-				break loop
-			} else {
-				sess.SendMessage(msg)
-			}
-		}
 
-	}
-}
+			switch msg.Type {
+			case "listen_on_room":
+				addClientToRoom(msg.Id, conn)
 
-func (ws *WebSocket) Close() {
-	ws.manager.Close()
+			case "broadcast":
+				for _, client := range roomClients[msg.Id] {
+					if client != conn {
+						client.WriteMessage(websocket.TextMessage, []byte(msg.Data))
+					}
+				}
+			}
+		}
+		removeClientFromAllRooms(conn)
+	}()
 }
 
 func RoomRouter() http.Handler {
