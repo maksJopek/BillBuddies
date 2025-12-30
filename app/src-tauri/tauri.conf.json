@@ -2,7 +2,7 @@
 	"$schema": "https://schema.tauri.app/config/2",
 	"productName": "bill-buddies",
 	"version": "0.1.0",
-	"identifier": "eu.jopek.bill_buddies",
+	"identifier": "eu.jopek.bill-buddies",
 	"build": {
 		"beforeDevCommand": "pnpm dev",
 		"devUrl": "http://localhost:1420",
