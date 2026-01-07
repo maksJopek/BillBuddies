@@ -4,6 +4,7 @@ import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import { formatDateStandard } from '$lib/date';
 import { appState } from '$lib/state';
+import { IS_TAURI } from '$lib/constants';
 
 GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
@@ -154,7 +155,7 @@ export async function extractPaymentFile(
 
 export async function openPayment(): Promise<PaymentData | null> {
 	let buffer: ArrayBuffer | null;
-	if (appState.tauri) {
+	if (IS_TAURI) {
 		const path = await openDialog({
 			defaultPath: await downloadDir(),
 			directory: false,

@@ -9,6 +9,7 @@
 	--primary: #1d169c;
 	--primary-hover: #2119b3;
 	--success: #22c55e;
+	--warning: #422c00;
 	--danger: #6c0909;
 	--danger-hover: #840b0b;
 	--gray: #888;
@@ -30,7 +31,6 @@ body {
 .toast {
 	padding: 12px;
 	background-color: var(--surface);
-	border: 1px solid var(--border);
 	border-radius: 4px;
 	box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
 	width: var(--width);
@@ -49,6 +49,10 @@ body {
 
 .toast[data-type='info'] {
 	background-color: var(--primary);
+}
+
+.toast[data-type='warning'] {
+	background-color: var(--warning);
 }
 
 .toast[data-type='error'] {

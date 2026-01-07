@@ -1,4 +1,5 @@
-export { default as AlertIcon } from './AlertIcon.svelte';
+export { default as AlertCircleIcon } from './AlertCircleIcon.svelte';
+export { default as AlertTriangleIcon } from './AlertTriangleIcon.svelte';
 export { default as ArrowLeftIcon } from './ArrowLeftIcon.svelte';
 export { default as CheckIcon } from './CheckIcon.svelte';
 export { default as Icon } from './Icon.svelte';

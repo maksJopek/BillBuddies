@@ -16,10 +16,12 @@
 		RoomSelectModal,
 		CheckIcon,
 		InfoIcon,
-		AlertIcon
+		AlertCircleIcon,
+		AlertTriangleIcon
 	} from '$lib/components';
 	import { paymentShare, appState, editAccount, loadData } from '$lib/state';
 	import { disconnectWS } from '$lib/websocket';
+	import { IS_TAURI } from '$lib/constants';
 	import '../app.css';
 
 	let { children } = $props();
@@ -70,7 +72,7 @@
 
 	onMount(async () => {
 		await loadData();
-		if (!appState.tauri) {
+		if (!IS_TAURI) {
 			return;
 		}
 		const urls = await getCurrentUrls();
@@ -100,7 +102,10 @@
 		<InfoIcon />
 	{/snippet}
 	{#snippet errorIcon()}
-		<AlertIcon />
+		<AlertCircleIcon />
+	{/snippet}
+	{#snippet warningIcon()}
+		<AlertTriangleIcon />
 	{/snippet}
 </Toaster>
 

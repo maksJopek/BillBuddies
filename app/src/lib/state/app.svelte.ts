@@ -1,4 +1,5 @@
 import { toast } from 'svelte-sonner';
+import { ROOM_TOKEN_HASH_PARAM } from '$lib/constants';
 import * as crypto from './crypto';
 import * as storage from './storage';
 import * as api from './api';
@@ -27,7 +28,6 @@ export interface AppState {
 	account: storage.Account;
 	loading: Promise<void> | null;
 	loaded: boolean;
-	tauri: boolean;
 }
 
 function defaultAccount() {
@@ -45,8 +45,7 @@ export const appState = $state<AppState>({
 	roomKeys: {},
 	account: storage.getAccount() ?? defaultAccount(),
 	loading: null,
-	loaded: false,
-	tauri: '__TAURI_INTERNALS__' in window
+	loaded: false
 });
 
 export function calcRoomBalance(room: crypto.Room) {
@@ -78,7 +77,7 @@ async function loadRooms() {
 		async ([id, key]) => {
 			const room = await crypto.decryptRoom(await api.getRoom(id), key);
 			listenOnRoom(id);
-			return { ...room, id, balance: calcRoomBalance(room) };
+			return { ...room!, id, balance: calcRoomBalance(room!) };
 		}
 	);
 	appState.rooms = await Promise.all(promises);
@@ -87,10 +86,10 @@ async function loadRooms() {
 
 async function checkLocationHash() {
 	const check = async () => {
-		if (location.hash.startsWith('#newRoomId=')) {
+		if (location.hash.startsWith('#' + ROOM_TOKEN_HASH_PARAM + '=')) {
 			const params = new URLSearchParams(location.hash.slice(1));
-			await importRoom(params.get('newRoomId')!);
-			params.delete('newRoomId');
+			await importRoom(params.get(ROOM_TOKEN_HASH_PARAM)!);
+			params.delete(ROOM_TOKEN_HASH_PARAM);
 			if (params.size === 0) {
 				location.hash = '';
 			} else {
@@ -151,12 +150,22 @@ async function saveRoom(id: string, data: Partial<crypto.Room>) {
 }
 
 export async function importRoom(token: string) {
-	const { id, key } = await crypto.parseRoomToken(token);
-	if (tryFindRoom(id) !== null) {
+	const parsed = await crypto.parseRoomToken(token);
+	if (!parsed) {
+		toast.error('Link jest nieprawidłowy');
 		return;
 	}
+	const { id, key } = parsed;
 	const { iv, data } = await api.getRoom(id);
 	const room = await crypto.decryptRoom({ iv, data }, key);
+	if (!room) {
+		toast.error('Link jest nieprawidłowy');
+		return;
+	}
+	if (tryFindRoom(id) !== null) {
+		toast.warning('Pokój już istnieje');
+		return;
+	}
 	room.users[appState.account.id] = appState.account.name;
 	await addRoom(room, key, id);
 	toast.success('Dołączono do pokoju');

@@ -7,6 +7,7 @@
 		Button
 	} from '$lib/components';
 	import { extractPayment, openPayment, type PaymentData } from '$lib/pdf';
+	import { IS_TAURI } from '$lib/constants';
 
 	interface Props {
 		open: boolean;
@@ -74,7 +75,7 @@
 	}
 
 	async function handleOpenPDF() {
-		if (appState.tauri) {
+		if (IS_TAURI) {
 			const data = await openPayment();
 			handlePDFData(data);
 		} else {
@@ -89,7 +90,7 @@
 		bind:description={form.description}
 		bind:date={form.date}
 	/>
-	{#if !appState.tauri}
+	{#if !IS_TAURI}
 		<input
 			bind:this={pdfInput}
 			type="file"
