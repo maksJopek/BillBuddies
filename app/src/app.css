@@ -1,15 +1,16 @@
 :root {
+	--text: #e5e5e5;
 	--background: #0a0a0a;
 	--background-hover: rgba(255, 255, 255, 0.075);
 	--surface: #1a1a1a;
 	--surface-hover: rgba(255, 255, 255, 0.025);
 	--border: #212121;
 	--border-radius: 4px;
-	--primary: #4f46e5;
-	--primary-hover: #5a54ee;
+	--primary: #1d169c;
+	--primary-hover: #2119b3;
 	--success: #22c55e;
-	--danger: #ef4444;
-	--danger-hover: #f05656;
+	--danger: #6c0909;
+	--danger-hover: #840b0b;
 	--gray: #888;
 }
 
@@ -21,6 +22,41 @@
 }
 
 body {
-	color: #e5e5e5;
+	color: var(--text);
+	background-color: var(--background);
 	font-family: 'Roboto', sans-serif;
+}
+
+.toast {
+	padding: 12px;
+	background-color: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+	width: var(--width);
+	color: var(--text);
+	font-weight: 500;
+	font-size: 0.875rem;
+	letter-spacing: 0.25px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.toast[data-type='success'] {
+	background-color: #0a391b;
+}
+
+.toast[data-type='info'] {
+	background-color: var(--primary);
+}
+
+.toast[data-type='error'] {
+	background-color: var(--danger);
+}
+
+.toast > div[data-icon] {
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }

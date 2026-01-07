@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { toast } from 'svelte-sonner';
 	import {
 		paymentShare,
 		appState,
@@ -16,6 +17,7 @@
 		type ExpenseFormProps,
 		PlusIcon,
 		IconLink,
+		IconButton,
 		ArrowLeftIcon,
 		List,
 		ShareIcon
@@ -63,7 +65,7 @@
 	async function handleShareRoom() {
 		const url = location.origin + '#newRoomId=' + (await shareRoom(roomId));
 		await navigator.clipboard.writeText(url);
-		appState.showToast('Link skopiowany');
+		toast.info('Link skopiowany');
 	}
 </script>
 
@@ -71,16 +73,14 @@
 	<IconLink href="/" aria-label="go back">
 		<ArrowLeftIcon />
 	</IconLink>
-	<h1>{data.room.name}</h1>
-	<div class="flex"></div>
-	<div class="btns">
-		<Button onclick={handleOpenExpenseAddModal}>
-			<PlusIcon />
-		</Button>
-		<Button onclick={handleShareRoom}>
-			<ShareIcon />
-		</Button>
-	</div>
+	<h1 class="flex">{data.room.name}</h1>
+	<IconButton aria-label="share" onclick={handleShareRoom}>
+		<ShareIcon />
+	</IconButton>
+	<Button onclick={handleOpenExpenseAddModal}>
+		<PlusIcon />
+		<span>Nowy wydatek</span>
+	</Button>
 </div>
 {#if Object.keys(data.room.users).length >= 2}
 	<ExpenseBalance {roomId} />
@@ -115,10 +115,5 @@
 
 	.flex {
 		flex: 1;
-	}
-
-	.btns {
-		display: flex;
-		gap: 2rem;
 	}
 </style>

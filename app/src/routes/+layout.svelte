@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
+	import { Toaster } from 'svelte-sonner';
 	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
 	import {
 		getCurrent as getCurrentUrls,
@@ -13,11 +14,13 @@
 		IconButton,
 		SettingsIcon,
 		RoomSelectModal,
-		Toast
+		CheckIcon,
+		InfoIcon,
+		AlertIcon
 	} from '$lib/components';
 	import { paymentShare, appState, editAccount, loadData } from '$lib/state';
-	import '../app.css';
 	import { disconnectWS } from '$lib/websocket';
+	import '../app.css';
 
 	let { children } = $props();
 
@@ -27,7 +30,6 @@
 		amount: null,
 		date: null
 	});
-	let toast: Toast;
 
 	function handleOpenSettings() {
 		settingsModalOpen = true;
@@ -67,7 +69,6 @@
 	let unlisten2: UnlistenFn | null = null;
 
 	onMount(async () => {
-		appState.showToast = toast.show;
 		await loadData();
 		if (!appState.tauri) {
 			return;
@@ -87,6 +88,21 @@
 		unlisten2?.();
 	});
 </script>
+
+<Toaster
+	position="bottom-center"
+	toastOptions={{ unstyled: true, class: 'toast' }}
+>
+	{#snippet successIcon()}
+		<CheckIcon />
+	{/snippet}
+	{#snippet infoIcon()}
+		<InfoIcon />
+	{/snippet}
+	{#snippet errorIcon()}
+		<AlertIcon />
+	{/snippet}
+</Toaster>
 
 <div class="app">
 	<header>
@@ -108,13 +124,10 @@
 	onSelect={handleSelectRoom}
 />
 
-<Toast bind:this={toast} />
-
 <style>
 	.app {
 		height: 100vh;
 		width: 100%;
-		background-color: var(--background);
 		display: flex;
 		flex-direction: column;
 	}

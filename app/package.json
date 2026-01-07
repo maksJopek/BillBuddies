@@ -21,6 +21,7 @@
 		"@tauri-apps/plugin-opener": "^2",
 		"js-base64": "^3.7.8",
 		"pdfjs-dist": "^5.4.296",
+		"svelte-sonner": "^1.0.7",
 		"tauri-plugin-get-pdf-api": "file:./tauri-plugin-get-pdf"
 	},
 	"devDependencies": {

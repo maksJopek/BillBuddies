@@ -7,4 +7,3 @@ export { default as Input } from './Input.svelte';
 export { default as List } from './List.svelte';
 export { default as Modal } from './Modal.svelte';
 export { default as Select } from './Select.svelte';
-export { default as Toast } from './Toast.svelte';

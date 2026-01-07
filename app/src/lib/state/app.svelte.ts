@@ -1,3 +1,4 @@
+import { toast } from 'svelte-sonner';
 import * as crypto from './crypto';
 import * as storage from './storage';
 import * as api from './api';
@@ -27,7 +28,6 @@ export interface AppState {
 	loading: Promise<void> | null;
 	loaded: boolean;
 	tauri: boolean;
-	showToast: (msg: string) => void;
 }
 
 function defaultAccount() {
@@ -46,8 +46,7 @@ export const appState = $state<AppState>({
 	account: storage.getAccount() ?? defaultAccount(),
 	loading: null,
 	loaded: false,
-	tauri: '__TAURI_INTERNALS__' in window,
-	showToast: null as unknown as AppState['showToast']
+	tauri: '__TAURI_INTERNALS__' in window
 });
 
 export function calcRoomBalance(room: crypto.Room) {
@@ -160,7 +159,7 @@ export async function importRoom(token: string) {
 	const room = await crypto.decryptRoom({ iv, data }, key);
 	room.users[appState.account.id] = appState.account.name;
 	await addRoom(room, key, id);
-	appState.showToast(`Pokój '${room.name}' dodany`);
+	toast.success('Dołączono do pokoju');
 }
 
 export async function createRoom(name: string) {
