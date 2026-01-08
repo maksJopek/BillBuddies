@@ -18,7 +18,10 @@ export async function connectWS() {
 		if (msg.type === 'change') {
 			const roomData = await decryptRoom(msg, appState.roomKeys[msg.id]);
 			const room = findRoom(msg.id);
-			Object.assign(room, { ...roomData, balance: calcRoomBalance(roomData) });
+			Object.assign(room, {
+				...roomData!,
+				balance: calcRoomBalance(roomData!)
+			});
 		} else if (msg.type === 'delete') {
 			await deleteRoom(msg.id, true);
 		}

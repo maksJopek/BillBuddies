@@ -73,14 +73,49 @@ async function loadKeys() {
 
 async function loadRooms() {
 	await loadKeys();
-	const promises: Promise<Room>[] = Object.entries(appState.roomKeys).map(
-		async ([id, key]) => {
-			const room = await crypto.decryptRoom(await api.getRoom(id), key);
-			listenOnRoom(id);
-			return { ...room!, id, balance: calcRoomBalance(room!) };
+	const keys = Object.entries(appState.roomKeys);
+	const ids = Object.keys(appState.roomKeys);
+	const promises: Promise<Room | null>[] = keys.map(async ([id, key]) => {
+		const apiRoom = await api.getRoom(id);
+		if (!apiRoom) {
+			return null;
 		}
-	);
-	appState.rooms = await Promise.all(promises);
+		const room = await crypto.decryptRoom(apiRoom, key);
+		listenOnRoom(id);
+		return { ...room!, id, balance: calcRoomBalance(room!) };
+	});
+	const rooms = await Promise.all(promises);
+	let missingCount = 0;
+	rooms.forEach((r, i) => {
+		if (r === null) {
+			missingCount++;
+			delete appState.roomKeys[ids[i]];
+		}
+	});
+	if (missingCount !== 0) {
+		storage.setRoomKeys(appState.roomKeys);
+		const duration = 8000;
+		if (missingCount === 1) {
+			toast.warning('1 pokój został usunięty przez innego użytkownika', {
+				duration
+			});
+		} else if (missingCount <= 4) {
+			toast.warning(
+				`${missingCount} pokoje zostały usunięte przez innego użytkownika`,
+				{
+					duration
+				}
+			);
+		} else {
+			toast.warning(
+				`${missingCount} pokoi zostało usuniętych przez innego użytkownika`,
+				{
+					duration
+				}
+			);
+		}
+	}
+	appState.rooms = rooms.filter((r) => r !== null);
 	appState.loaded = true;
 }
 
@@ -150,13 +185,18 @@ async function saveRoom(id: string, data: Partial<crypto.Room>) {
 }
 
 export async function importRoom(token: string) {
-	const parsed = await crypto.parseRoomToken(token);
-	if (!parsed) {
+	const parsedToken = await crypto.parseRoomToken(token);
+	if (!parsedToken) {
 		toast.error('Link jest nieprawidłowy');
 		return;
 	}
-	const { id, key } = parsed;
-	const { iv, data } = await api.getRoom(id);
+	const { id, key } = parsedToken;
+	const apiRoom = await api.getRoom(id);
+	if (!apiRoom) {
+		toast.error('Pokój nie istnieje');
+		return;
+	}
+	const { iv, data } = apiRoom;
 	const room = await crypto.decryptRoom({ iv, data }, key);
 	if (!room) {
 		toast.error('Link jest nieprawidłowy');

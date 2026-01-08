@@ -35,6 +35,7 @@ body {
 	box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
 	width: var(--width);
 	color: var(--text);
+	line-height: 1.25;
 	font-weight: 500;
 	font-size: 0.875rem;
 	letter-spacing: 0.25px;

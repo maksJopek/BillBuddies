@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onDestroy, onMount } from 'svelte';
-	import { Toaster } from 'svelte-sonner';
+	import { toast, Toaster } from 'svelte-sonner';
 	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
 	import {
 		getCurrent as getCurrentUrls,
@@ -40,6 +40,7 @@
 	async function handleChangeSettings(username: string) {
 		await editAccount(username);
 		settingsModalOpen = false;
+		toast.success('Zmieniono nazwę użytkownika');
 	}
 
 	function handleSelectRoom(id: string) {

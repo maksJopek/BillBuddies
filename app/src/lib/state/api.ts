@@ -6,9 +6,11 @@ async function request(url: string, options?: Partial<RequestInit>) {
 		//@ts-expect-error - this works as expected
 		options.headers['Content-Type'] = 'application/json';
 	}
-	return await fetch(import.meta.env.VITE_API_URL + url, options).then((res) =>
-		res.text()
-	);
+	const res = await fetch(import.meta.env.VITE_API_URL + url, options);
+	if (res.status === 404) {
+		return null;
+	}
+	return res.text();
 }
 
 function requestRoom(id: string, method: string, body?: string) {
@@ -22,7 +24,7 @@ export interface Room {
 
 export async function getRoom(id: string) {
 	const res = await requestRoom(id, 'GET');
-	return JSON.parse(res) as Room;
+	return res ? (JSON.parse(res) as Room) : null;
 }
 
 export async function createRoom(id: string, data: Room) {
