@@ -22,7 +22,7 @@
 	}
 
 	async function exportAccount() {
-		const url = location.origin + '#oldAccount=' + exportStorage();
+		const url = import.meta.env.VITE_WEB_URL + '#oldAccount=' + exportStorage();
 		await navigator.clipboard.writeText(url);
 		appState.showToast(
 			'Link skopiowany, otwórz go na nowym urządzeniu aby zaimportować konto'

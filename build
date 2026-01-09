@@ -1,0 +1,38 @@
+#!/bin/sh
+set -eu
+
+rm -rf billbuddies-build billbuddies-build.tar.zst
+mkdir -p billbuddies-build
+
+# Frontend
+cd app
+
+# Web
+echo "\nBuilding web frontend\n"
+pnpm build
+mv build ../billbuddies-build/billbuddies-web-frontend
+echo "\nWeb frontend builded\n"
+
+# Android app
+echo "\nBuilding android app\n"
+
+cargo tauri android build --apk --target aarch64 --target armv7
+apk_path="src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk"
+$ANDROID_HOME/build-tools/36.1.0/apksigner sign --v3-signing-enabled --ks-key-alias app --ks billbuddies.keystore "$apk_path"
+mv "$apk_path" ../billbuddies-build/billbuddies.apk
+rm -rf "src-tauri/gen/android/app/build/"
+
+cd ..
+echo "\nAndroid app builded\n"
+
+# Backend
+echo "\nBuilding server\n"
+cd server
+
+GOOS=linux GOARCH=arm64 go build -ldflags "-s"
+mv server ../billbuddies-build/billbuddies-server
+
+cd ..
+echo "\nServer builded\n"
+
+tar --zstd -cf billbuddies-build.tar.zst billbuddies-build

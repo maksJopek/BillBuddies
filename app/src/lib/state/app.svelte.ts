@@ -27,6 +27,7 @@ export interface AppState {
 	loading: Promise<void> | null;
 	loaded: boolean;
 	tauri: boolean;
+	mobile: boolean;
 	showToast: (msg: string) => void;
 }
 
@@ -47,6 +48,7 @@ export const appState = $state<AppState>({
 	loading: null,
 	loaded: false,
 	tauri: '__TAURI_INTERNALS__' in window,
+	mobile: /Android/i.test(navigator.userAgent),
 	showToast: null as unknown as AppState['showToast']
 });
 
@@ -86,32 +88,29 @@ async function loadRooms() {
 	appState.loaded = true;
 }
 
-async function checkLocationHash() {
-	const check = async () => {
-		if (location.hash.startsWith('#newRoomId=')) {
-			const params = new URLSearchParams(location.hash.slice(1));
-			await importRoom(params.get('newRoomId')!);
-			appState.showToast('Zaimportowano nowy pokój');
-			location.hash = '';
-		} else if (location.hash.startsWith('#oldAccount=')) {
-			const params = new URLSearchParams(location.hash.slice(1));
-			const imported = storage.importStorage(params.get('oldAccount')!);
-			if (imported === true) {
-				appState.showToast('Stare konto zaimportowane');
-				appState.account = storage.getAccount() ?? defaultAccount();
-			} else {
-				appState.showToast('Wystąpił problem przy imporcie starego konta');
-			}
-			location.hash = '';
+export async function checkLocationHash(url?: string) {
+	const hash = url ? new URL(url).hash : location.hash;
+	const params = new URLSearchParams(hash.slice(1));
+	if (params.has('newRoomId')) {
+		await importRoom(params.get('newRoomId')!);
+		appState.showToast('Zaimportowano nowy pokój');
+		location.hash = '';
+	} else if (params.has('oldAccount')) {
+		const imported = storage.importStorage(params.get('oldAccount')!);
+		if (imported === true) {
+			appState.showToast('Stare konto zaimportowane');
+			appState.account = storage.getAccount() ?? defaultAccount();
+		} else {
+			appState.showToast('Wystąpił problem przy imporcie starego konta');
 		}
-	};
-	await check();
-	window.onhashchange = check;
+		location.hash = '';
+	}
 }
 
-export async function loadData() {
+export async function loadData(url?: string) {
 	await connectWS();
-	await checkLocationHash();
+	await checkLocationHash(url);
+	window.onhashchange = () => checkLocationHash();
 	if (!appState.loading) {
 		appState.loading = loadRooms();
 	}

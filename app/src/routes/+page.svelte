@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { appState, createRoom, deleteRoom, editRoom } from '$lib/state';
+	import * as storage from '$lib/state/storage';
 	import {
 		RoomCreateModal,
 		RoomEditModal,
@@ -13,6 +14,10 @@
 	let roomCreateModalOpen = $state(false);
 	let roomEditModalOpen = $state(false);
 	let roomEditModalId = $state('');
+	let showDownloadButton = $state(defaultDownloadButtonVisibilty());
+	let downloadAEl = $state<HTMLAnchorElement>();
+
+	const downloadAppUrl = import.meta.env.VITE_WEB_URL + '/billbuddies.apk';
 
 	const totalBalanace = $derived(
 		appState.rooms.reduce((sum, room) => sum + room.balance, 0)
@@ -40,6 +45,20 @@
 	async function handleDeleteRoom() {
 		await deleteRoom(roomEditModalId);
 	}
+
+	function defaultDownloadButtonVisibilty() {
+		const saveVal = storage.getAppDownloaded();
+		if (saveVal === null) {
+			return appState.mobile && appState.tauri === false;
+		}
+		return saveVal;
+	}
+
+	function downloadApp() {
+		downloadAEl?.click();
+		storage.setAppDownloaded(false);
+		showDownloadButton = false;
+	}
 </script>
 
 <div class="top">
@@ -57,6 +76,12 @@
 		<RoomCard {...r} onEdit={() => handleOpenRoomEditModal(r.id)} />
 	{/each}
 </List>
+{#if showDownloadButton}
+	<Button class="download-mobile" onclick={downloadApp}>
+		Pobierz aplikację na Android'a
+	</Button>
+	<a bind:this={downloadAEl} href={downloadAppUrl} download hidden title=""></a>
+{/if}
 
 <RoomCreateModal bind:open={roomCreateModalOpen} onCreate={handleCreateRoom} />
 
@@ -80,5 +105,13 @@
 		display: flex;
 		gap: 0.5rem;
 		font-weight: 500;
+	}
+
+	:global(.download-mobile) {
+		position: absolute;
+		bottom: 2rem;
+		left: 1rem;
+		font-size: 0.9em !important;
+		width: 10rem;
 	}
 </style>

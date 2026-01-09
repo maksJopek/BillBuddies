@@ -12,7 +12,9 @@ export async function connectWS() {
 	if (ws !== null) {
 		return;
 	}
-	ws = new WebSocket(import.meta.env.VITE_API_URL + '/ws');
+	ws = new WebSocket(
+		import.meta.env.VITE_API_URL.replace('https', 'wss') + '/ws'
+	);
 	ws.onmessage = async (e) => {
 		const msg: WSMessage = JSON.parse(e.data);
 		if (msg.type === 'change') {
