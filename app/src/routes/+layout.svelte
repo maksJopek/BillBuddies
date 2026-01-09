@@ -91,9 +91,12 @@
 <div class="app">
 	<header>
 		<a href="/">BillBuddies</a>
-		<IconButton aria-label="settings" onclick={handleOpenSettings}>
-			<SettingsIcon />
-		</IconButton>
+		<div class="settings">
+			{appState.account.name}
+			<IconButton aria-label="settings" onclick={handleOpenSettings}>
+				<SettingsIcon />
+			</IconButton>
+		</div>
 	</header>
 	<main>
 		{@render children()}
@@ -142,6 +145,11 @@
 	a:hover,
 	a:focus-visible {
 		background-color: var(--background-hover);
+	}
+
+	.settings {
+		display: flex;
+		align-items: center;
 	}
 
 	main {

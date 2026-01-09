@@ -1,3 +1,4 @@
+import { Base64 } from 'js-base64';
 import * as crypto from './crypto';
 
 export interface Account {
@@ -22,7 +23,7 @@ function getStorageItem<T>(key: string) {
 }
 
 function setStorageItem<T>(key: string, data: T) {
-	STORAGE.setItem(key, JSON.stringify(data));
+	STORAGE.setItem(key, typeof data === 'string' ? data : JSON.stringify(data));
 }
 
 export function getAccount() {
@@ -51,4 +52,19 @@ export async function setRoomKeys(keys: Record<string, CryptoKey>) {
 		str[id] = await crypto.stringifyKey(keys[id]);
 	}
 	setStorageItem(ROOM_KEYS_KEY, str);
+}
+
+export function exportStorage() {
+	return Base64.encodeURL(JSON.stringify(STORAGE));
+}
+export function importStorage(newStorage: string) {
+	try {
+		const newStore = JSON.parse(Base64.decode(newStorage));
+		for (const [key, val] of Object.entries(newStore)) {
+			setStorageItem(key, val);
+		}
+		return true;
+	} catch {
+		return false;
+	}
 }

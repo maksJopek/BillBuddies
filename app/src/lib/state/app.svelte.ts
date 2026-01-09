@@ -91,12 +91,18 @@ async function checkLocationHash() {
 		if (location.hash.startsWith('#newRoomId=')) {
 			const params = new URLSearchParams(location.hash.slice(1));
 			await importRoom(params.get('newRoomId')!);
-			params.delete('newRoomId');
-			if (params.size === 0) {
-				location.hash = '';
+			appState.showToast('Zaimportowano nowy pokój');
+			location.hash = '';
+		} else if (location.hash.startsWith('#oldAccount=')) {
+			const params = new URLSearchParams(location.hash.slice(1));
+			const imported = storage.importStorage(params.get('oldAccount')!);
+			if (imported === true) {
+				appState.showToast('Stare konto zaimportowane');
+				appState.account = storage.getAccount() ?? defaultAccount();
 			} else {
-				location.hash = '#' + params.toString();
+				appState.showToast('Wystąpił problem przy imporcie starego konta');
 			}
+			location.hash = '';
 		}
 	};
 	await check();
@@ -105,11 +111,11 @@ async function checkLocationHash() {
 
 export async function loadData() {
 	await connectWS();
+	await checkLocationHash();
 	if (!appState.loading) {
 		appState.loading = loadRooms();
 	}
 	await appState.loading;
-	await checkLocationHash();
 }
 
 export function tryFindRoom(id: string) {
