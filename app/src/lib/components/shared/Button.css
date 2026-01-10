@@ -1,0 +1,50 @@
+.Button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	padding: 8px 12px;
+	border-radius: 4px;
+	outline: none;
+	border: none;
+	transition: background-color 0.2s ease;
+	cursor: pointer;
+	letter-spacing: 0.25px;
+	font-size: 1rem;
+	font-weight: 500;
+	font-family: inherit;
+	color: inherit;
+	text-decoration: none;
+}
+
+.Button.primary {
+	background-color: var(--primary);
+}
+
+.Button.primary:hover,
+.Button.primary:focus-visible {
+	background-color: var(--primary-hover);
+}
+
+.Button.neutral {
+	border: 2px solid var(--border);
+	background-color: transparent;
+}
+
+.Button.neutral:hover,
+.Button.neutral:focus-visible {
+	background-color: var(--surface-hover);
+}
+
+.Button.danger {
+	background-color: var(--danger);
+}
+
+.Button.danger:hover,
+.Button.danger:focus-visible {
+	background-color: var(--danger-hover);
+}
+
+.Button.fullWidth {
+	width: 100%;
+}

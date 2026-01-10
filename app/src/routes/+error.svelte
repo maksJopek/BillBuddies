@@ -1,23 +1,44 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { appLoadRetry } from '$lib/state';
+	import { Button, ButtonLink, AlertCircleIcon } from '$lib/components';
 </script>
 
-<div>
-	<h1>Wystąpił błąd</h1>
-	<p class="message">{page.error!.message}</p>
-	<p class="code">{page.status}</p>
-</div>
+{#if page.status === 404}
+	<main>
+		{#if page.route.id === '/(main)/room/[id]'}
+			<h1>Pokój nie istnieje</h1>
+		{:else}
+			<h1>Strona nie istnieje</h1>
+		{/if}
+		<ButtonLink href="/">Powrót</ButtonLink>
+	</main>
+{:else}
+	<main>
+		<div class="alert">
+			<AlertCircleIcon size={40} />
+		</div>
+		<h1>Coś poszło nie tak</h1>
+		<Button color="neutral" onclick={appLoadRetry}>Spróbuj ponownie</Button>
+	</main>
+{/if}
 
 <style>
-	div {
-		text-align: center;
-		margin-top: 25%;
+	main {
+		height: 100%;
 		display: flex;
+		align-items: center;
+		justify-content: center;
 		flex-direction: column;
-		gap: 0.75rem;
+		gap: 1rem;
 	}
 
-	.code {
-		color: var(--gray);
+	.alert {
+		color: var(--danger);
+	}
+
+	h1 {
+		font-size: 2rem;
+		letter-spacing: 0.5px;
 	}
 </style>

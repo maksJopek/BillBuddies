@@ -12,7 +12,7 @@
 	background-color: transparent;
 }
 
-Input:hover,
-Input:focus-visible {
+.Input:hover,
+.Input:focus-visible {
 	border-color: var(--primary-hover);
 }

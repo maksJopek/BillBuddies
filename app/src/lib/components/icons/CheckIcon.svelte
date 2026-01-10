@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { Icon } from '$lib/components';
+
+	interface Props {
+		size?: number;
+	}
+
+	let { size }: Props = $props();
 </script>
 
-<Icon small>
+<Icon {size}>
 	<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
 	<polyline points="22 4 12 14.01 9 11.01"></polyline>
 </Icon>

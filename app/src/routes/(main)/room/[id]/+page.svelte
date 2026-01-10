@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { toast } from 'svelte-sonner';
 	import {
 		paymentShare,
 		appState,
@@ -22,7 +21,6 @@
 		List,
 		ShareIcon
 	} from '$lib/components';
-	import { ROOM_TOKEN_HASH_PARAM } from '$lib/constants';
 
 	let { data } = $props();
 
@@ -64,14 +62,7 @@
 	}
 
 	async function handleShareRoom() {
-		const url =
-			location.origin +
-			'#' +
-			ROOM_TOKEN_HASH_PARAM +
-			'=' +
-			(await shareRoom(roomId));
-		await navigator.clipboard.writeText(url);
-		toast.info('Link skopiowany');
+		await shareRoom(roomId);
 	}
 </script>
 

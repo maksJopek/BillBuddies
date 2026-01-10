@@ -1,8 +1,14 @@
 <script lang="ts">
 	import { Icon } from '$lib/components';
+
+	interface Props {
+		size?: number;
+	}
+
+	let { size }: Props = $props();
 </script>
 
-<Icon>
+<Icon {size}>
 	<circle cx="18" cy="5" r="3"></circle>
 	<circle cx="6" cy="12" r="3"></circle>
 	<circle cx="18" cy="19" r="3"></circle>

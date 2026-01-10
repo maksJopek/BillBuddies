@@ -1,4 +1,4 @@
-import { sendRoomChange, sendRoomDelete } from '$lib/websocket';
+import * as ws from './websocket';
 
 async function request(url: string, options?: Partial<RequestInit>) {
 	if (options?.body !== undefined) {
@@ -10,7 +10,11 @@ async function request(url: string, options?: Partial<RequestInit>) {
 	if (res.status === 404) {
 		return null;
 	}
-	return res.text();
+	const text = await res.text();
+	if (res.status >= 400) {
+		throw new Error(`something went wrong: ${text} (${res.status})`);
+	}
+	return text;
 }
 
 function requestRoom(id: string, method: string, body?: string) {
@@ -33,10 +37,10 @@ export async function createRoom(id: string, data: Room) {
 
 export async function editRoom(id: string, data: Room) {
 	await requestRoom(id, 'PATCH', JSON.stringify(data));
-	sendRoomChange(id, data);
+	ws.sendRoomChange(id, data);
 }
 
 export async function deleteRoom(id: string) {
 	await requestRoom(id, 'DELETE');
-	sendRoomDelete(id);
+	ws.sendRoomDelete(id);
 }

@@ -1,9 +1,10 @@
+import { goto, invalidateAll } from '$app/navigation';
 import { toast } from 'svelte-sonner';
 import { ROOM_TOKEN_HASH_PARAM } from '$lib/constants';
 import * as crypto from './crypto';
 import * as storage from './storage';
 import * as api from './api';
-import { connectWS, listenOnRoom } from '../websocket';
+import * as ws from './websocket';
 
 export type WithoutID<T> = Omit<T, 'id'>;
 
@@ -27,7 +28,6 @@ export interface AppState {
 	roomKeys: storage.RoomKeys;
 	account: storage.Account;
 	loading: Promise<void> | null;
-	loaded: boolean;
 }
 
 function defaultAccount() {
@@ -41,11 +41,10 @@ function defaultAccount() {
 }
 
 export const appState = $state<AppState>({
+	account: storage.getAccount() ?? defaultAccount(),
 	rooms: [],
 	roomKeys: {},
-	account: storage.getAccount() ?? defaultAccount(),
-	loading: null,
-	loaded: false
+	loading: null
 });
 
 export function calcRoomBalance(room: crypto.Room) {
@@ -81,8 +80,11 @@ async function loadRooms() {
 			return null;
 		}
 		const room = await crypto.decryptRoom(apiRoom, key);
-		listenOnRoom(id);
-		return { ...room!, id, balance: calcRoomBalance(room!) };
+		if (!room) {
+			throw new Error("can't decrypt room");
+		}
+		ws.listenOnRoom(id);
+		return { ...room, id, balance: calcRoomBalance(room) };
 	});
 	const rooms = await Promise.all(promises);
 	let missingCount = 0;
@@ -116,33 +118,48 @@ async function loadRooms() {
 		}
 	}
 	appState.rooms = rooms.filter((r) => r !== null);
-	appState.loaded = true;
 }
 
-async function checkLocationHash() {
-	const check = async () => {
-		if (location.hash.startsWith('#' + ROOM_TOKEN_HASH_PARAM + '=')) {
-			const params = new URLSearchParams(location.hash.slice(1));
-			await importRoom(params.get(ROOM_TOKEN_HASH_PARAM)!);
-			params.delete(ROOM_TOKEN_HASH_PARAM);
-			if (params.size === 0) {
-				location.hash = '';
-			} else {
-				location.hash = '#' + params.toString();
-			}
-		}
-	};
-	await check();
-	window.onhashchange = check;
-}
-
-export async function loadData() {
-	await connectWS();
+async function loadData() {
 	if (!appState.loading) {
 		appState.loading = loadRooms();
 	}
 	await appState.loading;
-	await checkLocationHash();
+}
+
+function resetData() {
+	appState.roomKeys = {};
+	appState.rooms = [];
+	appState.loading = null;
+}
+
+export async function appLoad() {
+	await ws.connect();
+	await loadData();
+}
+
+export function appUnload() {
+	resetData();
+	ws.disconnect();
+}
+
+export async function appLoadRetry() {
+	appUnload();
+	await invalidateAll();
+}
+
+export async function checkRoomToken() {
+	if (!location.hash.startsWith('#' + ROOM_TOKEN_HASH_PARAM + '=')) {
+		return;
+	}
+	const params = new URLSearchParams(location.hash.slice(1));
+	const token = params.get(ROOM_TOKEN_HASH_PARAM)!;
+	const id = await importRoom(token);
+	if (id) {
+		goto(`/room/${id}`, { replaceState: true });
+	} else {
+		goto(`/`, { replaceState: true });
+	}
 }
 
 export function tryFindRoom(id: string) {
@@ -169,7 +186,7 @@ async function addRoom(room: crypto.Room, key: CryptoKey, id?: string) {
 	appState.rooms.push(r);
 	appState.roomKeys[r.id] = key;
 	storage.setRoomKeys(appState.roomKeys);
-	listenOnRoom(id);
+	ws.listenOnRoom(id);
 	return id;
 }
 
@@ -185,30 +202,32 @@ async function saveRoom(id: string, data: Partial<crypto.Room>) {
 }
 
 export async function importRoom(token: string) {
+	await loadRooms();
 	const parsedToken = await crypto.parseRoomToken(token);
 	if (!parsedToken) {
 		toast.error('Link jest nieprawidłowy');
-		return;
+		return null;
 	}
 	const { id, key } = parsedToken;
 	const apiRoom = await api.getRoom(id);
 	if (!apiRoom) {
 		toast.error('Pokój nie istnieje');
-		return;
+		return null;
 	}
 	const { iv, data } = apiRoom;
 	const room = await crypto.decryptRoom({ iv, data }, key);
 	if (!room) {
 		toast.error('Link jest nieprawidłowy');
-		return;
+		return null;
 	}
 	if (tryFindRoom(id) !== null) {
 		toast.warning('Pokój już istnieje');
-		return;
+		return id;
 	}
 	room.users[appState.account.id] = appState.account.name;
 	await addRoom(room, key, id);
 	toast.success('Dołączono do pokoju');
+	return id;
 }
 
 export async function createRoom(name: string) {
@@ -217,9 +236,12 @@ export async function createRoom(name: string) {
 	return addRoom({ name, users: { [me.id]: me.name }, expenses: [] }, key);
 }
 
-export function shareRoom(id: string) {
+export async function shareRoom(id: string) {
 	const key = appState.roomKeys[id];
-	return crypto.createRoomToken({ id, key });
+	const token = await crypto.createRoomToken({ id, key });
+	const url = `${location.origin}#${ROOM_TOKEN_HASH_PARAM}=${token}`;
+	await navigator.clipboard.writeText(url);
+	toast.info('Link skopiowany do schowka');
 }
 
 export async function editRoom(id: string, name: string) {
