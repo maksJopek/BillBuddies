@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Input, Modal } from '$lib/components';
 	import { appState } from '$lib/state';
+	import { exportStorage } from '$lib/state/storage';
+	import Button from './shared/Button.svelte';
 
 	interface Props {
 		open: boolean;
@@ -18,6 +20,14 @@
 	function handleSave() {
 		onChange(username);
 	}
+
+	async function exportAccount() {
+		const url = location.origin + '#oldAccount=' + exportStorage();
+		await navigator.clipboard.writeText(url);
+		appState.showToast(
+			'Link skopiowany, otwórz go na nowym urządzeniu aby zaimportować konto'
+		);
+	}
 </script>
 
 <Modal bind:open title="Ustawienia" onSave={handleSave}>
@@ -27,4 +37,5 @@
 		placeholder="Bob"
 		bind:value={username}
 	/>
+	<Button onclick={exportAccount}>Eksportuj konto</Button>
 </Modal>
