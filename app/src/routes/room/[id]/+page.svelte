@@ -61,7 +61,8 @@
 	}
 
 	async function handleShareRoom() {
-		const url = location.origin + '#newRoomId=' + (await shareRoom(roomId));
+		const url =
+			import.meta.env.VITE_WEB_URL + '#newRoomId=' + (await shareRoom(roomId));
 		await navigator.clipboard.writeText(url);
 		appState.showToast('Link skopiowany');
 	}

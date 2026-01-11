@@ -68,3 +68,10 @@ export function importStorage(newStorage: string) {
 		return false;
 	}
 }
+
+export function getAppDownloaded() {
+	return getStorageItem('app-downloaded');
+}
+export function setAppDownloaded(val: boolean) {
+	return setStorageItem('app-downloaded', val);
+}

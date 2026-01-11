@@ -15,7 +15,13 @@
 		RoomSelectModal,
 		Toast
 	} from '$lib/components';
-	import { paymentShare, appState, editAccount, loadData } from '$lib/state';
+	import {
+		paymentShare,
+		appState,
+		editAccount,
+		loadData,
+		checkLocationHash
+	} from '$lib/state';
 	import '../app.css';
 	import { disconnectWS } from '$lib/websocket';
 
@@ -46,10 +52,6 @@
 		goto(`/room/${id}`);
 	}
 
-	function handleOpenUrl(urls: string[]) {
-		// TODO
-	}
-
 	async function handleIntent() {
 		const intent = await checkPendingIntent();
 		if (!intent || !intent.uri) {
@@ -68,15 +70,20 @@
 
 	onMount(async () => {
 		appState.showToast = toast.show;
-		await loadData();
+		let url: string | undefined = undefined;
+		if (appState.tauri) {
+			const urls = await getCurrentUrls();
+			if (urls) {
+				url = urls[0];
+			}
+		}
+		await loadData(url);
 		if (!appState.tauri) {
 			return;
 		}
-		const urls = await getCurrentUrls();
-		if (urls) {
-			handleOpenUrl(urls);
-		}
-		unlisten1 = await onOpenUrl(handleOpenUrl);
+		unlisten1 = await onOpenUrl(async (urls) => {
+			await checkLocationHash(urls[0]);
+		});
 		handleIntent();
 		unlisten2 = await listen(TauriEvent.WINDOW_FOCUS, handleIntent);
 	});
