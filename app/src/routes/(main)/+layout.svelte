@@ -19,7 +19,7 @@
 		AlertCircleIcon,
 		AlertTriangleIcon
 	} from '$lib/components';
-	import { paymentShare, editAccount, appUnload } from '$lib/state';
+	import { paymentShare, editAccount, appUnload, appState } from '$lib/state';
 	import { IS_TAURI } from '$lib/constants';
 
 	let { children } = $props();
@@ -41,12 +41,39 @@
 		toast.success('Zmieniono nazwę użytkownika');
 	}
 
-	function handleSelectRoom(id: string) {
+	async function handleSelectRoom(id: string) {
 		paymentShare.roomId = id;
 		paymentShare.data = roomSelectModalPayment;
 		roomSelectModalOpen = false;
 		roomSelectModalPayment = { amount: null, date: null };
-		goto(`/room/${id}`);
+		await goto(`/room/${id}`);
+	}
+
+	function handleMissingRooms() {
+		const count = appState.missingRooms;
+		if (!count) {
+			return;
+		}
+		const duration = 8000;
+		if (count === 1) {
+			toast.warning('1 pokój został usunięty przez innego użytkownika', {
+				duration
+			});
+		} else if (count <= 4) {
+			toast.warning(
+				`${count} pokoje zostały usunięte przez innego użytkownika`,
+				{
+					duration
+				}
+			);
+		} else {
+			toast.warning(
+				`${count} pokoi zostało usuniętych przez innego użytkownika`,
+				{
+					duration
+				}
+			);
+		}
 	}
 
 	function handleOpenUrl(urls: string[]) {
@@ -70,6 +97,7 @@
 	let unlisten2: UnlistenFn | null = null;
 
 	onMount(async () => {
+		handleMissingRooms();
 		if (!IS_TAURI) {
 			return;
 		}

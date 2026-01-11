@@ -24,6 +24,7 @@ export interface Room extends crypto.Room {
 }
 
 export interface AppState {
+	missingRooms: number | null;
 	rooms: Room[];
 	roomKeys: storage.RoomKeys;
 	account: storage.Account;
@@ -41,9 +42,10 @@ function defaultAccount() {
 }
 
 export const appState = $state<AppState>({
-	account: storage.getAccount() ?? defaultAccount(),
+	missingRooms: null,
 	rooms: [],
 	roomKeys: {},
+	account: storage.getAccount() ?? defaultAccount(),
 	loading: null
 });
 
@@ -75,7 +77,7 @@ async function loadRooms() {
 	const keys = Object.entries(appState.roomKeys);
 	const ids = Object.keys(appState.roomKeys);
 	const promises: Promise<Room | null>[] = keys.map(async ([id, key]) => {
-		const apiRoom = await api.getRoom(id);
+		const apiRoom = await api.unsafeGetRoom(id);
 		if (!apiRoom) {
 			return null;
 		}
@@ -96,27 +98,8 @@ async function loadRooms() {
 	});
 	if (missingCount !== 0) {
 		storage.setRoomKeys(appState.roomKeys);
-		const duration = 8000;
-		if (missingCount === 1) {
-			toast.warning('1 pokój został usunięty przez innego użytkownika', {
-				duration
-			});
-		} else if (missingCount <= 4) {
-			toast.warning(
-				`${missingCount} pokoje zostały usunięte przez innego użytkownika`,
-				{
-					duration
-				}
-			);
-		} else {
-			toast.warning(
-				`${missingCount} pokoi zostało usuniętych przez innego użytkownika`,
-				{
-					duration
-				}
-			);
-		}
 	}
+	appState.missingRooms = missingCount;
 	appState.rooms = rooms.filter((r) => r !== null);
 }
 
@@ -128,6 +111,7 @@ async function loadData() {
 }
 
 function resetData() {
+	appState.missingRooms = null;
 	appState.roomKeys = {};
 	appState.rooms = [];
 	appState.loading = null;
@@ -156,9 +140,9 @@ export async function checkRoomToken() {
 	const token = params.get(ROOM_TOKEN_HASH_PARAM)!;
 	const id = await importRoom(token);
 	if (id) {
-		goto(`/room/${id}`, { replaceState: true });
+		await goto(`/room/${id}`, { replaceState: true });
 	} else {
-		goto(`/`, { replaceState: true });
+		await goto(`/`, { replaceState: true });
 	}
 }
 
@@ -172,11 +156,16 @@ export function findRoom(id: string) {
 
 async function addRoom(room: crypto.Room, key: CryptoKey, id?: string) {
 	const encrypted = await crypto.encryptRoom(room, key);
-	if (id === undefined) {
+	const call = id ? api.editRoom : api.createRoom;
+	if (!id) {
 		id = crypto.getRandomUUID();
-		await api.createRoom(id, encrypted);
-	} else {
-		await api.editRoom(id, encrypted);
+	}
+	const err = await call(id, encrypted);
+	if (err) {
+		if (err === api.Err.NOT_FOUND) {
+			await deleteRoom(id, true);
+		}
+		return null;
 	}
 	const r: Room = {
 		...room,
@@ -196,7 +185,14 @@ async function saveRoom(id: string, data: Partial<crypto.Room>) {
 	Object.assign(combined, data);
 	const key = appState.roomKeys[id];
 	const encrypted = await crypto.encryptRoom(combined, key);
-	await api.editRoom(id, encrypted);
+	const err = await api.editRoom(id, encrypted);
+	if (err) {
+		if (err === api.Err.NOT_FOUND) {
+			await goto('/');
+			await deleteRoom(id, true);
+		}
+		return;
+	}
 	const room = findRoom(id);
 	Object.assign(room, { ...data, balance: calcRoomBalance(combined) });
 }
@@ -209,9 +205,8 @@ export async function importRoom(token: string) {
 		return null;
 	}
 	const { id, key } = parsedToken;
-	const apiRoom = await api.getRoom(id);
-	if (!apiRoom) {
-		toast.error('Pokój nie istnieje');
+	const [apiRoom, err] = await api.getRoom(id);
+	if (err) {
 		return null;
 	}
 	const { iv, data } = apiRoom;
@@ -225,7 +220,9 @@ export async function importRoom(token: string) {
 		return id;
 	}
 	room.users[appState.account.id] = appState.account.name;
-	await addRoom(room, key, id);
+	if (!(await addRoom(room, key, id))) {
+		return null;
+	}
 	toast.success('Dołączono do pokoju');
 	return id;
 }
@@ -249,12 +246,15 @@ export async function editRoom(id: string, name: string) {
 }
 
 export async function deleteRoom(id: string, localOnly = false) {
-	if (localOnly === false) {
-		await api.deleteRoom(id);
+	if (!localOnly) {
+		const err = await api.deleteRoom(id);
+		if (err === api.Err.UNEXPECTED) {
+			return;
+		}
 	}
 	appState.rooms = appState.rooms.filter((r) => r.id !== id);
 	delete appState.roomKeys[id];
-	storage.setRoomKeys(appState.roomKeys);
+	await storage.setRoomKeys(appState.roomKeys);
 }
 
 export function findExpense(roomId: string, id: string) {
