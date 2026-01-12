@@ -2,10 +2,7 @@
 	import { onDestroy, onMount } from 'svelte';
 	import { toast, Toaster } from 'svelte-sonner';
 	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
-	import {
-		getCurrent as getCurrentUrls,
-		onOpenUrl
-	} from '@tauri-apps/plugin-deep-link';
+	import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 	import { checkPendingIntent } from 'tauri-plugin-get-pdf-api';
 	import { goto } from '$app/navigation';
 	import { extractPaymentFile, type PaymentData } from '$lib/pdf';
@@ -19,7 +16,13 @@
 		AlertCircleIcon,
 		AlertTriangleIcon
 	} from '$lib/components';
-	import { paymentShare, editAccount, appUnload, appState } from '$lib/state';
+	import {
+		paymentShare,
+		editAccount,
+		appUnload,
+		appState,
+		checkLocationHash
+	} from '$lib/state';
 	import { IS_TAURI } from '$lib/constants';
 
 	let { children } = $props();
@@ -49,35 +52,39 @@
 		await goto(`/room/${id}`);
 	}
 
-	function handleMissingRooms() {
-		const count = appState.missingRooms;
-		if (!count) {
-			return;
+	async function handleLoadingEffects() {
+		for (const t of appState.loadingToasts) {
+			const duration = t.duration;
+			switch (t.type) {
+				case 'success':
+					toast.success(t.message, { duration });
+					break;
+				case 'info':
+					toast.info(t.message, { duration });
+					break;
+				case 'warning':
+					toast.warning(t.message, { duration });
+					break;
+				case 'error':
+					toast.error(t.message, { duration });
+					break;
+			}
 		}
-		const duration = 8000;
-		if (count === 1) {
-			toast.warning('1 pokój został usunięty przez innego użytkownika', {
-				duration
-			});
-		} else if (count <= 4) {
-			toast.warning(
-				`${count} pokoje zostały usunięte przez innego użytkownika`,
-				{
-					duration
-				}
-			);
-		} else {
-			toast.warning(
-				`${count} pokoi zostało usuniętych przez innego użytkownika`,
-				{
-					duration
-				}
-			);
+		appState.loadingToasts = [];
+		if (appState.loadingRedirect) {
+			await goto(appState.loadingRedirect, { replaceState: true });
+			appState.loadingRedirect = null;
 		}
 	}
 
 	function handleOpenUrl(urls: string[]) {
-		// TODO
+		try {
+			const url = new URL(urls[0]);
+			checkLocationHash(url.hash);
+		} catch (error) {
+			console.error('deep link url error:', error);
+			toast.error('Link jest nieprawidłowy');
+		}
 	}
 
 	async function handleIntent() {
@@ -97,16 +104,12 @@
 	let unlisten2: UnlistenFn | null = null;
 
 	onMount(async () => {
-		handleMissingRooms();
+		handleLoadingEffects();
 		if (!IS_TAURI) {
 			return;
 		}
-		const urls = await getCurrentUrls();
-		if (urls) {
-			handleOpenUrl(urls);
-		}
-		unlisten1 = await onOpenUrl(handleOpenUrl);
 		handleIntent();
+		unlisten1 = await onOpenUrl(handleOpenUrl);
 		unlisten2 = await listen(TauriEvent.WINDOW_FOCUS, handleIntent);
 	});
 
@@ -137,9 +140,12 @@
 
 <header>
 	<a href="/">BillBuddies</a>
-	<IconButton aria-label="settings" onclick={handleOpenSettings}>
-		<SettingsIcon />
-	</IconButton>
+	<div class="settings">
+		{appState.account.name}
+		<IconButton aria-label="settings" onclick={handleOpenSettings}>
+			<SettingsIcon />
+		</IconButton>
+	</div>
 </header>
 <main>
 	{@render children()}
@@ -177,6 +183,11 @@
 	a:hover,
 	a:focus-visible {
 		background-color: var(--background-hover);
+	}
+
+	.settings {
+		display: flex;
+		align-items: center;
 	}
 
 	main {

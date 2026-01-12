@@ -26,3 +26,4 @@ tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-get-pdf = { path = "../tauri-plugin-get-pdf/" }
 tauri-plugin-deep-link = "2"
+tauri-plugin-os = "2"

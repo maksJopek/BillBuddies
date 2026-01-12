@@ -22,9 +22,6 @@ async function request(
 		return ['', Err.NOT_FOUND];
 	}
 	const text = await res.text();
-	if (options?.method === 'POST') {
-		throw new Error('test');
-	}
 	if (res.status >= 400) {
 		throw new Error(`something went wrong: ${text} (${res.status})`);
 	}

@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { Input, Modal } from '$lib/components';
+	import { Input, Modal, Button } from '$lib/components';
 	import { appState } from '$lib/state';
+	import { exportData } from '$lib/state/storage';
 
 	interface Props {
 		open: boolean;
@@ -18,6 +19,11 @@
 	function handleSave() {
 		onChange(username);
 	}
+
+	async function exportAccount() {
+		const url = import.meta.env.VITE_WEB_URL + '#oldAccount=' + exportData();
+		await navigator.clipboard.writeText(url);
+	}
 </script>
 
 <Modal bind:open title="Ustawienia" onSave={handleSave}>
@@ -27,4 +33,5 @@
 		placeholder="Bob"
 		bind:value={username}
 	/>
+	<Button onclick={exportAccount}>Eksportuj konto</Button>
 </Modal>

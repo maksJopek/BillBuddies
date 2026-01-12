@@ -7,11 +7,18 @@
 		children: Snippet;
 		color?: 'primary' | 'neutral' | 'danger';
 		fullWidth?: boolean;
+		class?: string;
 	}
 
-	let { children, color = 'primary', fullWidth, ...props }: Props = $props();
+	let {
+		children,
+		color = 'primary',
+		fullWidth,
+		class: className,
+		...props
+	}: Props = $props();
 </script>
 
-<button {...props} class={['Button', color]} class:fullWidth>
+<button {...props} class={['Button', color, className]} class:fullWidth>
 	{@render children()}
 </button>

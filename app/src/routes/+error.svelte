@@ -1,6 +1,7 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { appLoadRetry } from '$lib/state';
+	import { appState, appLoadRetry } from '$lib/state';
 	import { Button, ButtonLink, AlertCircleIcon } from '$lib/components';
 </script>
 
