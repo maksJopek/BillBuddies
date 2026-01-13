@@ -17,7 +17,7 @@
 		List,
 		Balance
 	} from '$lib/components';
-	import { IS_MOBILE } from '$lib/constants';
+	import { IS_ANDROID_BROWSER } from '$lib/constants';
 
 	let roomCreateModalOpen = $state(false);
 	let roomEditModalOpen = $state(false);
@@ -57,7 +57,7 @@
 	function defaultDownloadButtonVisibilty() {
 		const saveVal = storage.getAppDownloaded();
 		if (saveVal === null) {
-			return !IS_MOBILE;
+			return IS_ANDROID_BROWSER;
 		}
 		return saveVal;
 	}
