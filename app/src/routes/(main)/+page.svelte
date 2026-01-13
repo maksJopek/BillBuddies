@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { appState, createRoom, deleteRoom, editRoom } from '$lib/state';
+	import { onMount } from 'svelte';
+	import {
+		appState,
+		createRoom,
+		deleteRoom,
+		editRoom,
+		checkRoomToken
+	} from '$lib/state';
 	import * as storage from '$lib/state/storage';
 	import {
 		RoomCreateModal,
@@ -10,6 +17,7 @@
 		List,
 		Balance
 	} from '$lib/components';
+	import { IS_ANDROID_BROWSER } from '$lib/constants';
 
 	let roomCreateModalOpen = $state(false);
 	let roomEditModalOpen = $state(false);
@@ -17,7 +25,7 @@
 	let showDownloadButton = $state(defaultDownloadButtonVisibilty());
 	let downloadAEl = $state<HTMLAnchorElement>();
 
-	const downloadAppUrl = import.meta.env.VITE_WEB_URL + '/billbuddies.apk';
+	const downloadAppUrl = `${import.meta.env.VITE_WEB_URL}/billbuddies.apk`;
 
 	const totalBalanace = $derived(
 		appState.rooms.reduce((sum, room) => sum + room.balance, 0)
@@ -49,7 +57,7 @@
 	function defaultDownloadButtonVisibilty() {
 		const saveVal = storage.getAppDownloaded();
 		if (saveVal === null) {
-			return appState.mobile && appState.tauri === false;
+			return IS_ANDROID_BROWSER;
 		}
 		return saveVal;
 	}
@@ -59,6 +67,10 @@
 		storage.setAppDownloaded(false);
 		showDownloadButton = false;
 	}
+
+	onMount(() => {
+		checkRoomToken(location.hash);
+	});
 </script>
 
 <div class="top">

@@ -1,5 +1,6 @@
 import { Base64 } from 'js-base64';
 import * as crypto from './crypto';
+import { appState } from './app.svelte';
 
 export interface Account {
 	id: string;
@@ -13,6 +14,7 @@ export type RoomKeys = Record<string, CryptoKey>;
 const STORAGE = localStorage;
 const ACCOUNT_KEY = 'account';
 const ROOM_KEYS_KEY = 'room-keys';
+const APP_DOWNLOADED_KEY = 'app-downloaded';
 
 function getStorageItem<T>(key: string) {
 	const item = STORAGE.getItem(key);
@@ -54,24 +56,28 @@ export async function setRoomKeys(keys: Record<string, CryptoKey>) {
 	setStorageItem(ROOM_KEYS_KEY, str);
 }
 
-export function exportStorage() {
+export function exportData() {
 	return Base64.encodeURL(JSON.stringify(STORAGE));
 }
-export function importStorage(newStorage: string) {
+
+export function importData(data: string) {
 	try {
-		const newStore = JSON.parse(Base64.decode(newStorage));
-		for (const [key, val] of Object.entries(newStore)) {
+		const storage = JSON.parse(Base64.decode(data));
+		for (const [key, val] of Object.entries(storage)) {
 			setStorageItem(key, val);
 		}
+		appState.account = getAccount()!;
 		return true;
-	} catch {
+	} catch (error) {
+		console.error('account import error:', error);
 		return false;
 	}
 }
 
 export function getAppDownloaded() {
-	return getStorageItem('app-downloaded');
+	return getStorageItem<boolean>(APP_DOWNLOADED_KEY);
 }
-export function setAppDownloaded(val: boolean) {
-	return setStorageItem('app-downloaded', val);
+
+export function setAppDownloaded(downloaded: boolean) {
+	setStorageItem(APP_DOWNLOADED_KEY, downloaded);
 }

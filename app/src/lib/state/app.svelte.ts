@@ -1,7 +1,15 @@
+import { getCurrent as getCurrentUrls } from '@tauri-apps/plugin-deep-link';
+import { toast } from 'svelte-sonner';
+import { goto, invalidateAll } from '$app/navigation';
+import {
+	ACCOUNT_EXPORT_HASH_PARAM,
+	IS_TAURI,
+	ROOM_TOKEN_HASH_PARAM
+} from '$lib/constants';
 import * as crypto from './crypto';
 import * as storage from './storage';
 import * as api from './api';
-import { connectWS, listenOnRoom } from '../websocket';
+import * as ws from './websocket';
 
 export type WithoutID<T> = Omit<T, 'id'>;
 
@@ -20,15 +28,19 @@ export interface Room extends crypto.Room {
 	balance: number;
 }
 
+export interface ToastMessage {
+	type: 'success' | 'info' | 'warning' | 'error';
+	message: string;
+	duration?: number;
+}
+
 export interface AppState {
 	rooms: Room[];
 	roomKeys: storage.RoomKeys;
 	account: storage.Account;
 	loading: Promise<void> | null;
-	loaded: boolean;
-	tauri: boolean;
-	mobile: boolean;
-	showToast: (msg: string) => void;
+	loadingToasts: ToastMessage[];
+	loadingRedirect: string | null;
 }
 
 function defaultAccount() {
@@ -46,10 +58,8 @@ export const appState = $state<AppState>({
 	roomKeys: {},
 	account: storage.getAccount() ?? defaultAccount(),
 	loading: null,
-	loaded: false,
-	tauri: '__TAURI_INTERNALS__' in window,
-	mobile: /Android/i.test(navigator.userAgent),
-	showToast: null as unknown as AppState['showToast']
+	loadingToasts: [],
+	loadingRedirect: null
 });
 
 export function calcRoomBalance(room: crypto.Room) {
@@ -77,44 +87,117 @@ async function loadKeys() {
 
 async function loadRooms() {
 	await loadKeys();
-	const promises: Promise<Room>[] = Object.entries(appState.roomKeys).map(
-		async ([id, key]) => {
-			const room = await crypto.decryptRoom(await api.getRoom(id), key);
-			listenOnRoom(id);
-			return { ...room, id, balance: calcRoomBalance(room) };
+	const keys = Object.entries(appState.roomKeys);
+	const ids = Object.keys(appState.roomKeys);
+	const promises: Promise<Room | null>[] = keys.map(async ([id, key]) => {
+		const apiRoom = await api.unsafeGetRoom(id);
+		if (!apiRoom) {
+			return null;
 		}
-	);
-	appState.rooms = await Promise.all(promises);
-	appState.loaded = true;
-}
-
-export async function checkLocationHash(url?: string) {
-	const hash = url ? new URL(url).hash : location.hash;
-	const params = new URLSearchParams(hash.slice(1));
-	if (params.has('newRoomId')) {
-		await importRoom(params.get('newRoomId')!);
-		appState.showToast('Zaimportowano nowy pokój');
-		location.hash = '';
-	} else if (params.has('oldAccount')) {
-		const imported = storage.importStorage(params.get('oldAccount')!);
-		if (imported === true) {
-			appState.showToast('Stare konto zaimportowane');
-			appState.account = storage.getAccount() ?? defaultAccount();
-		} else {
-			appState.showToast('Wystąpił problem przy imporcie starego konta');
+		const room = await crypto.decryptRoom(apiRoom, key);
+		if (!room) {
+			throw new Error("can't decrypt room");
 		}
-		location.hash = '';
+		ws.listenOnRoom(id);
+		return { ...room, id, balance: calcRoomBalance(room) };
+	});
+	const rooms = await Promise.all(promises);
+	let missingRooms = 0;
+	rooms.forEach((r, i) => {
+		if (r === null) {
+			missingRooms++;
+			delete appState.roomKeys[ids[i]];
+		}
+	});
+	if (missingRooms !== 0) {
+		storage.setRoomKeys(appState.roomKeys);
+		let message = `${missingRooms} pokoi zostało usuniętych przez innego użytkownika`;
+		if (missingRooms === 1) {
+			message = '1 pokój został usunięty przez innego użytkownika';
+		} else if (missingRooms <= 4) {
+			message = `${missingRooms} pokoje zostały usunięte przez innego użytkownika`;
+		}
+		appState.loadingToasts.push({ type: 'warning', message, duration: 8000 });
 	}
+	appState.rooms = rooms.filter((r) => r !== null);
 }
 
-export async function loadData(url?: string) {
-	await connectWS();
-	await checkLocationHash(url);
-	window.onhashchange = () => checkLocationHash();
+function getHashParam(hash: string, name: string) {
+	if (!hash.startsWith(`#${name}=`)) {
+		return null;
+	}
+	const params = new URLSearchParams(location.hash.slice(1));
+	return params.get(name)!;
+}
+
+async function loadInitImport() {
+	let hash: string | null = null;
+	if (IS_TAURI) {
+		const urls = await getCurrentUrls();
+		if (!urls) {
+			return;
+		}
+		try {
+			const url = new URL(urls[0]);
+			hash = url.hash;
+		} catch (error) {
+			console.error('deep link url error:', error);
+			appState.loadingToasts.push({
+				type: 'error',
+				message: 'Link jest nieprawidłowy'
+			});
+		}
+	} else {
+		hash = location.hash;
+	}
+	if (!hash) {
+		return;
+	}
+	const data = getHashParam(hash, ACCOUNT_EXPORT_HASH_PARAM);
+	if (!data) {
+		return;
+	}
+	if (storage.importData(data)) {
+		appState.loadingToasts.push({
+			type: 'success',
+			message: 'Pomyślnie zaimportowano konto'
+		});
+	} else {
+		appState.loadingToasts.push({
+			type: 'error',
+			message: 'Import konta nie powiódł się'
+		});
+	}
+	appState.loadingRedirect = '/';
+}
+
+async function loadData() {
 	if (!appState.loading) {
 		appState.loading = loadRooms();
 	}
 	await appState.loading;
+}
+
+function resetData() {
+	appState.rooms = [];
+	appState.roomKeys = {};
+	appState.loading = null;
+}
+
+export async function appLoad() {
+	await ws.connect();
+	await loadInitImport();
+	await loadData();
+}
+
+export function appUnload() {
+	resetData();
+	ws.disconnect();
+}
+
+export async function appLoadRetry() {
+	appUnload();
+	await invalidateAll();
 }
 
 export function tryFindRoom(id: string) {
@@ -127,11 +210,16 @@ export function findRoom(id: string) {
 
 async function addRoom(room: crypto.Room, key: CryptoKey, id?: string) {
 	const encrypted = await crypto.encryptRoom(room, key);
-	if (id === undefined) {
+	const call = id ? api.editRoom : api.createRoom;
+	if (!id) {
 		id = crypto.getRandomUUID();
-		await api.createRoom(id, encrypted);
-	} else {
-		await api.editRoom(id, encrypted);
+	}
+	const err = await call(id, encrypted);
+	if (err) {
+		if (err === api.Err.NOT_FOUND) {
+			await deleteRoom(id, true);
+		}
+		return null;
 	}
 	const r: Room = {
 		...room,
@@ -141,7 +229,7 @@ async function addRoom(room: crypto.Room, key: CryptoKey, id?: string) {
 	appState.rooms.push(r);
 	appState.roomKeys[r.id] = key;
 	storage.setRoomKeys(appState.roomKeys);
-	listenOnRoom(id);
+	ws.listenOnRoom(id);
 	return id;
 }
 
@@ -151,21 +239,59 @@ async function saveRoom(id: string, data: Partial<crypto.Room>) {
 	Object.assign(combined, data);
 	const key = appState.roomKeys[id];
 	const encrypted = await crypto.encryptRoom(combined, key);
-	await api.editRoom(id, encrypted);
+	const err = await api.editRoom(id, encrypted);
+	if (err) {
+		if (err === api.Err.NOT_FOUND) {
+			await goto('/');
+			await deleteRoom(id, true);
+		}
+		return;
+	}
 	const room = findRoom(id);
 	Object.assign(room, { ...data, balance: calcRoomBalance(combined) });
 }
 
 export async function importRoom(token: string) {
-	const { id, key } = await crypto.parseRoomToken(token);
-	if (tryFindRoom(id) !== null) {
-		return;
+	const parsedToken = await crypto.parseRoomToken(token);
+	if (!parsedToken) {
+		toast.error('Link jest nieprawidłowy');
+		return null;
 	}
-	const { iv, data } = await api.getRoom(id);
+	const { id, key } = parsedToken;
+	const [apiRoom, err] = await api.getRoom(id);
+	if (err) {
+		return null;
+	}
+	const { iv, data } = apiRoom;
 	const room = await crypto.decryptRoom({ iv, data }, key);
+	if (!room) {
+		toast.error('Link jest nieprawidłowy');
+		return null;
+	}
+	if (tryFindRoom(id) !== null) {
+		toast.warning('Pokój już istnieje');
+		return id;
+	}
 	room.users[appState.account.id] = appState.account.name;
-	await addRoom(room, key, id);
-	appState.showToast(`Pokój '${room.name}' dodany`);
+	if (!(await addRoom(room, key, id))) {
+		return null;
+	}
+	toast.success('Dołączono do pokoju');
+	return id;
+}
+
+export async function checkRoomToken(hash: string) {
+	const token = getHashParam(hash, ROOM_TOKEN_HASH_PARAM);
+	if (!token) {
+		return false;
+	}
+	const id = await importRoom(token);
+	if (id) {
+		await goto(`/room/${id}`, { replaceState: true });
+	} else {
+		await goto(`/`, { replaceState: true });
+	}
+	return true;
 }
 
 export async function createRoom(name: string) {
@@ -174,9 +300,12 @@ export async function createRoom(name: string) {
 	return addRoom({ name, users: { [me.id]: me.name }, expenses: [] }, key);
 }
 
-export function shareRoom(id: string) {
+export async function shareRoom(id: string) {
 	const key = appState.roomKeys[id];
-	return crypto.createRoomToken({ id, key });
+	const token = await crypto.createRoomToken({ id, key });
+	const url = `${import.meta.env.VITE_WEB_URL}#${ROOM_TOKEN_HASH_PARAM}=${token}`;
+	await navigator.clipboard.writeText(url);
+	toast.info('Link skopiowany do schowka');
 }
 
 export async function editRoom(id: string, name: string) {
@@ -184,12 +313,15 @@ export async function editRoom(id: string, name: string) {
 }
 
 export async function deleteRoom(id: string, localOnly = false) {
-	if (localOnly === false) {
-		await api.deleteRoom(id);
+	if (!localOnly) {
+		const err = await api.deleteRoom(id);
+		if (err === api.Err.UNEXPECTED) {
+			return;
+		}
 	}
 	appState.rooms = appState.rooms.filter((r) => r.id !== id);
 	delete appState.roomKeys[id];
-	storage.setRoomKeys(appState.roomKeys);
+	await storage.setRoomKeys(appState.roomKeys);
 }
 
 export function findExpense(roomId: string, id: string) {
@@ -238,4 +370,32 @@ export async function editAccount(name: string) {
 		room.users[id] = name;
 	}
 	await Promise.all(promises);
+}
+
+export async function checkLocationHash(hash: string) {
+	const params = new URLSearchParams(hash.slice(1));
+	const roomToken = params.get(ROOM_TOKEN_HASH_PARAM);
+	const accountExport = params.get(ACCOUNT_EXPORT_HASH_PARAM);
+	if (roomToken) {
+		const id = await importRoom(roomToken);
+		if (id) {
+			await goto(`/room/${id}`, { replaceState: true });
+		} else {
+			await goto(`/`, { replaceState: true });
+		}
+	} else if (accountExport) {
+		const ok = storage.importData(accountExport);
+		if (ok) {
+			appState.loadingToasts.push({
+				type: 'success',
+				message: 'Pomyślnie zaimportowano konto'
+			});
+			await goto(`/`, { replaceState: true });
+			await invalidateAll();
+		} else {
+			toast.error('Import konta nie powiódł się');
+		}
+	} else {
+		toast.error('Link jest nieprawidłowy');
+	}
 }

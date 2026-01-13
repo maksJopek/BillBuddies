@@ -3,32 +3,27 @@
 
 	interface Props {
 		children: Snippet;
-		viewBox?: string;
-		strokeWidth?: string;
-		fill?: string;
+		size?: number;
 	}
 
-	let {
-		children,
-		viewBox = '0 0 24 24',
-		strokeWidth = '2px',
-		fill = 'none'
-	}: Props = $props();
+	let { children, size = 24 }: Props = $props();
 </script>
 
 <svg
 	xmlns="http://www.w3.org/2000/svg"
-	{viewBox}
-	style:stroke-width={strokeWidth}
-	style:fill>{@render children()}</svg
+	viewBox="0 0 24 24"
+	width={size}
+	height={size}
 >
+	{@render children()}
+</svg>
 
 <style>
 	svg {
-		width: 24px;
-		height: 24px;
 		stroke: currentColor;
 		stroke-linecap: round;
 		stroke-linejoin: round;
+		stroke-width: 2px;
+		fill: none;
 	}
 </style>

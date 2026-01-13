@@ -11,6 +11,7 @@
     "dialog:default",
     "fs:default",
     "get-pdf:default",
-    "deep-link:default"
+    "deep-link:default",
+    "os:default"
   ]
 }

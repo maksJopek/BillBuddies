@@ -1,9 +1,17 @@
 <script lang="ts">
 	import { Icon } from '$lib/components';
+
+	interface Props {
+		size?: number;
+	}
+
+	let { size }: Props = $props();
 </script>
 
-<Icon viewBox="-2 -2 24 24" strokeWidth="1px" fill="currentColor">
-	<path
-		d="M16 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM7.928 9.24a4.02 4.02 0 0 1-.026 1.644l5.04 2.537a4 4 0 1 1-.867 1.803l-5.09-2.562a4 4 0 1 1 .083-5.228l5.036-2.522a4 4 0 1 1 .929 1.772L7.928 9.24zM4 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm12 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"
-	></path>
+<Icon {size}>
+	<circle cx="18" cy="5" r="3"></circle>
+	<circle cx="6" cy="12" r="3"></circle>
+	<circle cx="18" cy="19" r="3"></circle>
+	<line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+	<line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
 </Icon>

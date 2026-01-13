@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { Input, Modal } from '$lib/components';
+	import { Input, Modal, Button } from '$lib/components';
+	import { ACCOUNT_EXPORT_HASH_PARAM } from '$lib/constants';
 	import { appState } from '$lib/state';
-	import { exportStorage } from '$lib/state/storage';
-	import Button from './shared/Button.svelte';
+	import { exportData } from '$lib/state/storage';
 
 	interface Props {
 		open: boolean;
@@ -22,11 +22,8 @@
 	}
 
 	async function exportAccount() {
-		const url = import.meta.env.VITE_WEB_URL + '#oldAccount=' + exportStorage();
+		const url = `${import.meta.env.VITE_WEB_URL}#${ACCOUNT_EXPORT_HASH_PARAM}=${exportData()}`;
 		await navigator.clipboard.writeText(url);
-		appState.showToast(
-			'Link skopiowany, otwórz go na nowym urządzeniu aby zaimportować konto'
-		);
 	}
 </script>
 

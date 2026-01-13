@@ -1,6 +1,7 @@
 import { Base64 } from 'js-base64';
 import type { Expense } from '$lib/state';
 
+const UUID_LENGTH = getRandomUUID().length;
 const ALGORITHM = 'AES-GCM';
 const IV_SIZE = 12;
 const KEY_SIZE = 32;
@@ -55,9 +56,28 @@ export async function createRoomToken(token: RoomToken) {
 	return `${id}.${key}`;
 }
 
-export async function parseRoomToken(token: string): Promise<RoomToken> {
-	const [id, key] = token.split('.');
-	return { id: Base64.decode(id), key: await parseKey(key) };
+export async function parseRoomToken(token: string): Promise<RoomToken | null> {
+	const items = token.split('.');
+	if (items.length !== 2) {
+		console.error('invalid room token format');
+		return null;
+	}
+	try {
+		const id = Base64.decode(items[0]);
+		if (
+			id.length !== UUID_LENGTH ||
+			!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id)
+		) {
+			console.error('room token id part must be a valid uuid');
+			return null;
+		}
+		const key = await parseKey(items[1]);
+		return { id, key };
+	} catch (error) {
+		console.error('failed to parse room token');
+		console.error(error);
+		return null;
+	}
 }
 
 export interface Room {
@@ -94,12 +114,18 @@ export async function encryptRoom(
 export async function decryptRoom(
 	room: EncryptedRoom,
 	key: CryptoKey
-): Promise<Room> {
+): Promise<Room | null> {
 	const iv = base64ToBytes(room.iv);
-	const data = await crypto.subtle.decrypt(
-		{ name: ALGORITHM, iv },
-		key,
-		base64ToBytes(room.data)
-	);
-	return JSON.parse(new TextDecoder().decode(data));
+	try {
+		const data = await crypto.subtle.decrypt(
+			{ name: ALGORITHM, iv },
+			key,
+			base64ToBytes(room.data)
+		);
+		return JSON.parse(new TextDecoder().decode(data));
+	} catch (error) {
+		console.error('failed to decrypt room');
+		console.error(error);
+		return null;
+	}
 }
