@@ -9,7 +9,7 @@ export enum Err {
 type Response = [string, Err | null];
 
 async function request(
-	url: string,
+	path: string,
 	options?: Partial<RequestInit>
 ): Promise<Response> {
 	if (options?.body !== undefined) {
@@ -17,7 +17,7 @@ async function request(
 		//@ts-expect-error - this works as expected
 		options.headers['Content-Type'] = 'application/json';
 	}
-	const res = await fetch(import.meta.env.VITE_API_URL + url, options);
+	const res = await fetch(`${import.meta.env.VITE_API_URL}${path}`, options);
 	if (res.status === 404) {
 		return ['', Err.NOT_FOUND];
 	}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Input, Modal, Button } from '$lib/components';
+	import { ACCOUNT_EXPORT_HASH_PARAM } from '$lib/constants';
 	import { appState } from '$lib/state';
 	import { exportData } from '$lib/state/storage';
 
@@ -21,7 +22,7 @@
 	}
 
 	async function exportAccount() {
-		const url = import.meta.env.VITE_WEB_URL + '#oldAccount=' + exportData();
+		const url = `${import.meta.env.VITE_WEB_URL}#${ACCOUNT_EXPORT_HASH_PARAM}=${exportData()}`;
 		await navigator.clipboard.writeText(url);
 	}
 </script>

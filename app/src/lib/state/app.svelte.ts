@@ -303,7 +303,7 @@ export async function createRoom(name: string) {
 export async function shareRoom(id: string) {
 	const key = appState.roomKeys[id];
 	const token = await crypto.createRoomToken({ id, key });
-	const url = `${location.origin}#${ROOM_TOKEN_HASH_PARAM}=${token}`;
+	const url = `${import.meta.env.VITE_WEB_URL}#${ROOM_TOKEN_HASH_PARAM}=${token}`;
 	await navigator.clipboard.writeText(url);
 	toast.info('Link skopiowany do schowka');
 }

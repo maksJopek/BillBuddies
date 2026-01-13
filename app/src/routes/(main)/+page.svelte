@@ -25,7 +25,7 @@
 	let showDownloadButton = $state(defaultDownloadButtonVisibilty());
 	let downloadAEl = $state<HTMLAnchorElement>();
 
-	const downloadAppUrl = import.meta.env.VITE_WEB_URL + '/billbuddies.apk';
+	const downloadAppUrl = `${import.meta.env.VITE_WEB_URL}/billbuddies.apk`;
 
 	const totalBalanace = $derived(
 		appState.rooms.reduce((sum, room) => sum + room.balance, 0)
