@@ -1,6 +1,12 @@
 <script module lang="ts">
-	export interface Props {
+	export interface SubmitProps {
 		amount: number;
+		description: string;
+		date: string;
+	}
+
+	export interface Props {
+		amount: number | null;
 		description: string;
 		date: string;
 	}
@@ -10,7 +16,7 @@
 	import { Input } from '$lib/components';
 
 	let {
-		amount = $bindable(0),
+		amount = $bindable(null),
 		description = $bindable(''),
 		date = $bindable('')
 	}: Props = $props();

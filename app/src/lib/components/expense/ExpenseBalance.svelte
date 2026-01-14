@@ -14,8 +14,9 @@
 	}
 
 	let { roomId }: Props = $props();
+
 	const room = $derived(findRoom(roomId));
-	const currentUserId = appState.account.id;
+	const currentUserId = $derived(appState.account.id);
 
 	let resolved = $derived.by(() => {
 		let wholeSum = 0;
@@ -108,9 +109,5 @@
 		display: flex;
 		align-items: center;
 		gap: 0.25rem;
-	}
-
-	.flex {
-		flex: 1;
 	}
 </style>

@@ -2,7 +2,8 @@
 	import {
 		FormModal,
 		ExpenseForm,
-		type ExpenseFormProps
+		type ExpenseFormProps,
+		type ExpenseFormSubmitProps
 	} from '$lib/components';
 	import { findExpense } from '$lib/state';
 
@@ -10,7 +11,7 @@
 		open: boolean;
 		roomId: string;
 		id: string;
-		onEdit: (expense: ExpenseFormProps) => any;
+		onEdit: (expense: ExpenseFormSubmitProps) => any;
 		onDelete: () => any;
 	}
 
@@ -38,7 +39,7 @@
 	});
 
 	function handleSave() {
-		onEdit(form);
+		onEdit(form as ExpenseFormSubmitProps);
 	}
 
 	function handleCancel() {

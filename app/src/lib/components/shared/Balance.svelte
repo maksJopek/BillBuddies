@@ -23,14 +23,14 @@
 
 <style>
 	.pos {
-		color: var(--success);
+		color: #43df7d;
 	}
 
 	.zero {
-		color: var(--gray);
+		color: #c7c7c7;
 	}
 
 	.neg {
-		color: var(--danger);
+		color: #f9b4b4;
 	}
 </style>

@@ -13,12 +13,11 @@
 		ExpenseCard,
 		ExpenseAddModal,
 		ExpenseEditModal,
-		type ExpenseFormProps,
+		type ExpenseFormSubmitProps,
 		PlusIcon,
 		IconLink,
 		IconButton,
 		ArrowLeftIcon,
-		List,
 		ShareIcon
 	} from '$lib/components';
 
@@ -40,7 +39,7 @@
 		expenseAddModalOpen = true;
 	}
 
-	async function handleAddExpense(expense: ExpenseFormProps) {
+	async function handleAddExpense(expense: ExpenseFormSubmitProps) {
 		await addExpense(roomId, {
 			...expense,
 			paidBy: appState.account.id
@@ -53,7 +52,7 @@
 		expenseEditModalId = id;
 	}
 
-	async function handleEditExpense(expense: ExpenseFormProps) {
+	async function handleEditExpense(expense: ExpenseFormSubmitProps) {
 		await editExpense(roomId, expenseEditModalId, expense);
 	}
 
@@ -82,7 +81,7 @@
 {#if Object.keys(data.room.users).length >= 2}
 	<ExpenseBalance {roomId} />
 {/if}
-<List>
+<ul>
 	{#each data.room.expenses as expense}
 		<ExpenseCard
 			{roomId}
@@ -90,7 +89,7 @@
 			onEdit={() => handleOpenExpenseEditModal(expense.id)}
 		/>
 	{/each}
-</List>
+</ul>
 
 <ExpenseAddModal bind:open={expenseAddModalOpen} onAdd={handleAddExpense} />
 
@@ -110,7 +109,7 @@
 		gap: 1rem;
 	}
 
-	.flex {
-		flex: 1;
+	ul {
+		gap: 1rem;
 	}
 </style>

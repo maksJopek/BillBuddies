@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { page } from '$app/state';
-	import { appState, appLoadRetry } from '$lib/state';
+	import { appLoadRetry } from '$lib/state';
 	import { Button, ButtonLink, AlertCircleIcon } from '$lib/components';
 </script>
 
@@ -35,7 +34,7 @@
 	}
 
 	.alert {
-		color: var(--danger);
+		color: #f8a5a5;
 	}
 
 	h1 {

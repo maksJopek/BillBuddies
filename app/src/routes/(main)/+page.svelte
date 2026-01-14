@@ -13,7 +13,6 @@
 		Button,
 		PlusIcon,
 		RoomCard,
-		List,
 		Balance
 	} from '$lib/components';
 
@@ -63,11 +62,11 @@
 		<span>Nowy pokój</span>
 	</Button>
 </div>
-<List>
+<ul>
 	{#each appState.rooms ?? [] as r}
 		<RoomCard {...r} onEdit={() => handleOpenRoomEditModal(r.id)} />
 	{/each}
-</List>
+</ul>
 
 <RoomCreateModal bind:open={roomCreateModalOpen} onCreate={handleCreateRoom} />
 
@@ -91,5 +90,9 @@
 		display: flex;
 		gap: 0.5rem;
 		font-weight: 500;
+	}
+
+	ul {
+		gap: 1rem;
 	}
 </style>

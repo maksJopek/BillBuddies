@@ -3,8 +3,6 @@ import { readFile } from '@tauri-apps/plugin-fs';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 import { formatDateStandard } from '$lib/date';
-import { appState } from '$lib/state';
-import { IS_TAURI } from '$lib/constants';
 
 GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
@@ -154,30 +152,16 @@ export async function extractPaymentFile(
 }
 
 export async function openPayment(): Promise<PaymentData | null> {
-	let buffer: ArrayBuffer | null;
-	if (IS_TAURI) {
-		const path = await openDialog({
-			defaultPath: await downloadDir(),
-			directory: false,
-			multiple: false,
-			filters: [{ name: 'PDF', extensions: ['pdf'] }]
-		});
-		if (path === null) {
-			return null;
-		}
-		buffer = (await readFile(path)).buffer;
-	} else {
-		buffer = await new Promise((res) => {
-			const input = document.createElement('input');
-			input.type = 'file';
-			input.accept = 'application/pdf';
-			input.oncancel = () => res(null);
-			input.onchange = async () => {
-				res(await input.files![0].arrayBuffer());
-			};
-			input.click();
-		});
+	const path = await openDialog({
+		defaultPath: await downloadDir(),
+		directory: false,
+		multiple: false,
+		filters: [{ name: 'PDF', extensions: ['pdf'] }]
+	});
+	if (path === null) {
+		return null;
 	}
+	const buffer = (await readFile(path)).buffer;
 	if (!buffer) {
 		return null;
 	}

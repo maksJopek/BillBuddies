@@ -4,5 +4,6 @@ export { default as ExpenseCard } from './ExpenseCard.svelte';
 export { default as ExpenseEditModal } from './ExpenseEditModal.svelte';
 export {
 	default as ExpenseForm,
-	type Props as ExpenseFormProps
+	type Props as ExpenseFormProps,
+	type SubmitProps as ExpenseFormSubmitProps
 } from './ExpenseForm.svelte';

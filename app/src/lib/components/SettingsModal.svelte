@@ -10,10 +10,9 @@
 		UserIcon
 	} from '$lib/components';
 	import { APK_DOWNLOAD_FILENAME, APK_DOWNLOAD_PATH } from '$lib/constants';
-	import { appState } from '$lib/state';
-	import { setAppDownloadPopup } from '$lib/state/storage';
+	import { appState, disableAppDownloadPopup } from '$lib/state';
 	import { onMount } from 'svelte';
-	// import { IS_ANDROID_BROWSER } from '$lib/constants';
+	import { IS_ANDROID_BROWSER } from '$lib/constants';
 
 	interface Props {
 		open: boolean;
@@ -47,8 +46,7 @@
 	function handleClose() {
 		open = false;
 		if (appState.appDownloadPopup) {
-			appState.appDownloadPopup = false;
-			setAppDownloadPopup(false);
+			disableAppDownloadPopup();
 		}
 	}
 
@@ -71,19 +69,21 @@
 		</Form>
 	{:else}
 		<ul>
-			<li>
-				<ButtonLink
-					href={`${import.meta.env.VITE_WEB_URL}${APK_DOWNLOAD_PATH}`}
-					download={APK_DOWNLOAD_FILENAME}
-					fullWidth
-					spacious
-					color={appState.appDownloadPopup ? 'primary' : 'neutral'}
-				>
-					<span>Pobierz aplikację</span>
-					<span class="flex"></span>
-					<SmartphoneIcon size={20} />
-				</ButtonLink>
-			</li>
+			{#if IS_ANDROID_BROWSER}
+				<li>
+					<ButtonLink
+						href={`${import.meta.env.VITE_WEB_URL}${APK_DOWNLOAD_PATH}`}
+						download={APK_DOWNLOAD_FILENAME}
+						fullWidth
+						spacious
+						color={appState.appDownloadPopup ? 'primary' : 'neutral'}
+					>
+						<span>Pobierz aplikację</span>
+						<span class="flex"></span>
+						<SmartphoneIcon size={20} />
+					</ButtonLink>
+				</li>
+			{/if}
 			<li>
 				<Button fullWidth spacious color="neutral" onclick={onDataExport}>
 					<span>Eksportuj dane</span>
@@ -110,14 +110,7 @@
 
 <style>
 	ul {
-		list-style-type: none;
-		display: flex;
-		flex-direction: column;
 		gap: 0.5rem;
 		padding-bottom: 2rem;
-	}
-
-	.flex {
-		flex: 1;
 	}
 </style>

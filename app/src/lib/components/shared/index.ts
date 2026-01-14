@@ -7,6 +7,5 @@ export { default as FormModal } from './FormModal.svelte';
 export { default as IconButton } from './IconButton.svelte';
 export { default as IconLink } from './IconLink.svelte';
 export { default as Input } from './Input.svelte';
-export { default as List } from './List.svelte';
 export { default as Modal, type Props as ModalProps } from './Modal.svelte';
 export { default as Select } from './Select.svelte';

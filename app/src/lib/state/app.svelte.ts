@@ -12,6 +12,8 @@ import * as storage from './storage';
 import * as api from './api';
 import * as ws from './websocket';
 
+export { exportData } from './storage';
+
 export type WithoutID<T> = Omit<T, 'id'>;
 
 export type PartialWithoutID<T> = Partial<WithoutID<T>>;
@@ -56,7 +58,7 @@ function defaultAccount() {
 }
 
 export const appState = $state<AppState>({
-	appDownloadPopup: storage.getAppDownloadPopup() ?? true,
+	appDownloadPopup: storage.getAppDownloadPopup() ?? IS_ANDROID_BROWSER,
 	rooms: [],
 	roomKeys: {},
 	account: storage.getAccount() ?? defaultAccount(),
@@ -64,6 +66,11 @@ export const appState = $state<AppState>({
 	loadingToasts: [],
 	loadingRedirect: null
 });
+
+export function disableAppDownloadPopup() {
+	appState.appDownloadPopup = false;
+	storage.setAppDownloadPopup(false);
+}
 
 export function calcRoomBalance(room: crypto.Room) {
 	if (room.expenses.length === 0) {
@@ -393,8 +400,7 @@ export async function checkLocationHash(hash: string) {
 				type: 'success',
 				message: 'Pomyślnie zaimportowano konto'
 			});
-			await goto(`/`, { replaceState: true });
-			await invalidateAll();
+			await goto(`/`, { replaceState: true, invalidateAll: true });
 		} else {
 			toast.error('Import konta nie powiódł się');
 		}

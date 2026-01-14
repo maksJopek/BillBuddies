@@ -4,6 +4,7 @@
 		FormModal,
 		ExpenseForm,
 		type ExpenseFormProps,
+		type ExpenseFormSubmitProps,
 		Button
 	} from '$lib/components';
 	import { extractPayment, openPayment, type PaymentData } from '$lib/pdf';
@@ -11,16 +12,17 @@
 
 	interface Props {
 		open: boolean;
-		onAdd: (expense: ExpenseFormProps) => any;
+		onAdd: (expense: ExpenseFormSubmitProps) => any;
 	}
 
 	let { open = $bindable(false), onAdd }: Props = $props();
 
 	const getEmptyForm = () => ({
-		amount: null as unknown as number,
+		amount: null,
 		description: '',
 		date: new Date().toISOString().slice(0, -8)
 	});
+
 	let form = $state<ExpenseFormProps>(getEmptyForm());
 	let pdfInput = $state<HTMLInputElement | null>(null);
 
@@ -49,7 +51,7 @@
 			paymentShare.roomId = null;
 			paymentShare.data = { amount: null, date: null };
 		}
-		onAdd(form);
+		onAdd(form as ExpenseFormSubmitProps);
 	}
 
 	function handlePDFData(data: PaymentData | null) {

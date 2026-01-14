@@ -28,6 +28,12 @@ body {
 	font-family: 'Roboto', sans-serif;
 }
 
+ul {
+	list-style-type: none;
+	display: flex;
+	flex-direction: column;
+}
+
 .toast {
 	padding: 12px;
 	background-color: var(--surface);
@@ -64,4 +70,8 @@ body {
 	display: flex;
 	align-items: center;
 	justify-content: center;
+}
+
+.flex {
+	flex: 1;
 }

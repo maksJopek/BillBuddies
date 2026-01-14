@@ -21,9 +21,9 @@
 		editAccount,
 		appUnload,
 		appState,
-		checkLocationHash
+		checkLocationHash,
+		exportData
 	} from '$lib/state';
-	import { exportData } from '$lib/state/storage';
 	import { ACCOUNT_EXPORT_HASH_PARAM, IS_TAURI } from '$lib/constants';
 
 	let { children } = $props();
@@ -149,7 +149,9 @@
 <header>
 	<a href="/">BillBuddies</a>
 	<div class="settings">
-		{appState.account.name}
+		<span class="settings-username">
+			{appState.account.name}
+		</span>
 		<IconButton aria-label="settings" onclick={handleOpenSettings}>
 			<SettingsIcon />
 		</IconButton>
@@ -200,6 +202,12 @@
 	.settings {
 		display: flex;
 		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.settings-username {
+		font-weight: 500;
+		letter-spacing: 0.5px;
 	}
 
 	main {
