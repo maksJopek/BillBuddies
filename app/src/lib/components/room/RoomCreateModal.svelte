@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Modal, RoomForm } from '$lib/components';
+	import { FormModal, RoomForm } from '$lib/components';
 
 	interface Props {
 		open: boolean;
@@ -21,6 +21,6 @@
 	}
 </script>
 
-<Modal bind:open title="Stwórz nowy pokój" onSave={handleSave}>
+<FormModal bind:open title="Stwórz nowy pokój" onSave={handleSave}>
 	<RoomForm bind:name />
-</Modal>
+</FormModal>

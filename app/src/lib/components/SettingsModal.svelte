@@ -1,38 +1,123 @@
 <script lang="ts">
-	import { Input, Modal, Button } from '$lib/components';
-	import { ACCOUNT_EXPORT_HASH_PARAM } from '$lib/constants';
+	import {
+		Modal,
+		Form,
+		Input,
+		Button,
+		ButtonLink,
+		SmartphoneIcon,
+		UploadIcon,
+		UserIcon
+	} from '$lib/components';
+	import { APK_DOWNLOAD_FILENAME, APK_DOWNLOAD_PATH } from '$lib/constants';
 	import { appState } from '$lib/state';
-	import { exportData } from '$lib/state/storage';
+	import { setAppDownloadPopup } from '$lib/state/storage';
+	import { onMount } from 'svelte';
+	// import { IS_ANDROID_BROWSER } from '$lib/constants';
 
 	interface Props {
 		open: boolean;
-		onChange: (username: string) => any;
+		onDataExport: () => any;
+		onUsernameChange: (username: string) => any;
 	}
 
-	let { open = $bindable(false), onChange }: Props = $props();
+	let {
+		open = $bindable(false),
+		onDataExport,
+		onUsernameChange
+	}: Props = $props();
 
+	let usernameForm = $state(false);
 	let username = $state('');
 
-	$effect(() => {
+	function handleChangeUsername() {
 		username = appState.account.name;
+		usernameForm = true;
+	}
+
+	async function handleUsernameFormSave() {
+		await onUsernameChange(username);
+		usernameForm = false;
+	}
+
+	function handleUsernameFormCancel() {
+		usernameForm = false;
+	}
+
+	function handleClose() {
+		open = false;
+		if (appState.appDownloadPopup) {
+			appState.appDownloadPopup = false;
+			setAppDownloadPopup(false);
+		}
+	}
+
+	onMount(() => {
+		if (appState.appDownloadPopup) {
+			open = true;
+		}
 	});
-
-	function handleSave() {
-		onChange(username);
-	}
-
-	async function exportAccount() {
-		const url = `${import.meta.env.VITE_WEB_URL}#${ACCOUNT_EXPORT_HASH_PARAM}=${exportData()}`;
-		await navigator.clipboard.writeText(url);
-	}
 </script>
 
-<Modal bind:open title="Ustawienia" onSave={handleSave}>
-	<Input
-		label="Twoja nazwa"
-		type="text"
-		placeholder="Bob"
-		bind:value={username}
-	/>
-	<Button onclick={exportAccount}>Eksportuj konto</Button>
+<Modal bind:open title="Ustawienia">
+	{#if usernameForm}
+		<Form onSave={handleUsernameFormSave} onCancel={handleUsernameFormCancel}>
+			<Input
+				label="Twoja nazwa"
+				type="text"
+				placeholder="Bob"
+				bind:value={username}
+			/>
+		</Form>
+	{:else}
+		<ul>
+			<li>
+				<ButtonLink
+					href={`${import.meta.env.VITE_WEB_URL}${APK_DOWNLOAD_PATH}`}
+					download={APK_DOWNLOAD_FILENAME}
+					fullWidth
+					spacious
+					color={appState.appDownloadPopup ? 'primary' : 'neutral'}
+				>
+					<span>Pobierz aplikację</span>
+					<span class="flex"></span>
+					<SmartphoneIcon size={20} />
+				</ButtonLink>
+			</li>
+			<li>
+				<Button fullWidth spacious color="neutral" onclick={onDataExport}>
+					<span>Eksportuj dane</span>
+					<span class="flex"></span>
+					<UploadIcon size={20} />
+				</Button>
+			</li>
+			<li>
+				<Button
+					fullWidth
+					spacious
+					color="neutral"
+					onclick={handleChangeUsername}
+				>
+					<span>Zmień nazwę użytkownika</span>
+					<span class="flex"></span>
+					<UserIcon size={20} />
+				</Button>
+			</li>
+		</ul>
+		<Button fullWidth color="neutral" onclick={handleClose}>Zamknij</Button>
+	{/if}
 </Modal>
+
+<style>
+	ul {
+		list-style-type: none;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding-bottom: 2rem;
+	}
+
+	.flex {
+		flex: 1;
+	}
+</style>

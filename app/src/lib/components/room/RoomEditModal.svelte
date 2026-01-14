@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Modal, RoomForm } from '$lib/components';
+	import { FormModal, RoomForm } from '$lib/components';
 	import { findRoom } from '$lib/state';
 
 	interface Props {
@@ -29,7 +29,7 @@
 	}
 </script>
 
-<Modal
+<FormModal
 	bind:open
 	title="Edytuj pokój"
 	cancelText="Usuń"
@@ -38,4 +38,4 @@
 	onCancel={handleCancel}
 >
 	<RoomForm bind:name />
-</Modal>
+</FormModal>

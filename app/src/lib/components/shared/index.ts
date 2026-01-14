@@ -1,10 +1,12 @@
 export { default as Balance } from './Balance.svelte';
-export { default as Button } from './Button.svelte';
+export { default as Button, type Props as ButtonProps } from './Button.svelte';
 export { default as ButtonLink } from './ButtonLink.svelte';
 export { default as Field } from './Field.svelte';
+export { default as Form, type Props as FormProps } from './Form.svelte';
+export { default as FormModal } from './FormModal.svelte';
 export { default as IconButton } from './IconButton.svelte';
 export { default as IconLink } from './IconLink.svelte';
 export { default as Input } from './Input.svelte';
 export { default as List } from './List.svelte';
-export { default as Modal } from './Modal.svelte';
+export { default as Modal, type Props as ModalProps } from './Modal.svelte';
 export { default as Select } from './Select.svelte';

@@ -23,7 +23,8 @@
 		appState,
 		checkLocationHash
 	} from '$lib/state';
-	import { IS_TAURI } from '$lib/constants';
+	import { exportData } from '$lib/state/storage';
+	import { ACCOUNT_EXPORT_HASH_PARAM, IS_TAURI } from '$lib/constants';
 
 	let { children } = $props();
 
@@ -38,7 +39,14 @@
 		settingsModalOpen = true;
 	}
 
-	async function handleChangeSettings(username: string) {
+	async function handleDataExport() {
+		const url = `${import.meta.env.VITE_WEB_URL}#${ACCOUNT_EXPORT_HASH_PARAM}=${exportData()}`;
+		await navigator.clipboard.writeText(url);
+		settingsModalOpen = false;
+		toast.info('Link skopiowany do schowka. Otwórz go na nowym urządzeniu');
+	}
+
+	async function handleUsernameChange(username: string) {
 		await editAccount(username);
 		settingsModalOpen = false;
 		toast.success('Zmieniono nazwę użytkownika');
@@ -151,7 +159,11 @@
 	{@render children()}
 </main>
 
-<SettingsModal bind:open={settingsModalOpen} onChange={handleChangeSettings} />
+<SettingsModal
+	bind:open={settingsModalOpen}
+	onDataExport={handleDataExport}
+	onUsernameChange={handleUsernameChange}
+/>
 
 <RoomSelectModal
 	bind:open={roomSelectModalOpen}

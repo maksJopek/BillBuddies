@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { Modal, ExpenseForm, type ExpenseFormProps } from '$lib/components';
+	import {
+		FormModal,
+		ExpenseForm,
+		type ExpenseFormProps
+	} from '$lib/components';
 	import { findExpense } from '$lib/state';
 
 	interface Props {
@@ -42,7 +46,7 @@
 	}
 </script>
 
-<Modal
+<FormModal
 	bind:open
 	title="Edytuj wydatek"
 	cancelText="Usuń"
@@ -55,4 +59,4 @@
 		bind:description={form.description}
 		bind:date={form.date}
 	/>
-</Modal>
+</FormModal>

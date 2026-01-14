@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { paymentShare, appState } from '$lib/state';
+	import { paymentShare } from '$lib/state';
 	import {
-		Modal,
+		FormModal,
 		ExpenseForm,
 		type ExpenseFormProps,
 		Button
@@ -84,7 +84,7 @@
 	}
 </script>
 
-<Modal bind:open title="Dodaj nowy wydatek" onSave={handleSave}>
+<FormModal bind:open title="Dodaj nowy wydatek" onSave={handleSave}>
 	<ExpenseForm
 		bind:amount={form.amount}
 		bind:description={form.description}
@@ -103,7 +103,7 @@
 			Open PDF
 		</Button>
 	{/if}
-</Modal>
+</FormModal>
 
 <style>
 	input[type='file'] {

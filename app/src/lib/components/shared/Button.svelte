@@ -1,24 +1,26 @@
+<script module lang="ts">
+	export interface Props {
+		children: Snippet;
+		color?: 'primary' | 'neutral' | 'danger';
+		fullWidth?: boolean;
+		spacious?: boolean;
+	}
+</script>
+
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
 	import './Button.css';
 
-	interface Props extends HTMLButtonAttributes {
-		children: Snippet;
-		color?: 'primary' | 'neutral' | 'danger';
-		fullWidth?: boolean;
-		class?: string;
-	}
-
 	let {
 		children,
 		color = 'primary',
 		fullWidth,
-		class: className,
+		spacious,
 		...props
-	}: Props = $props();
+	}: Props & HTMLButtonAttributes = $props();
 </script>
 
-<button {...props} class={['Button', color, className]} class:fullWidth>
+<button {...props} class={['Button', color]} class:fullWidth class:spacious>
 	{@render children()}
 </button>

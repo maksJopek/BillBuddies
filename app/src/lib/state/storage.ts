@@ -14,7 +14,7 @@ export type RoomKeys = Record<string, CryptoKey>;
 const STORAGE = localStorage;
 const ACCOUNT_KEY = 'account';
 const ROOM_KEYS_KEY = 'room-keys';
-const APP_DOWNLOADED_KEY = 'app-downloaded';
+const APP_DOWNLOAD_POPUP_KEY = 'app-download-popup';
 
 function getStorageItem<T>(key: string) {
 	const item = STORAGE.getItem(key);
@@ -36,8 +36,12 @@ export function setAccount(account: Account) {
 	setStorageItem(ACCOUNT_KEY, account);
 }
 
+function getStringRoomKeys() {
+	return getStorageItem<StringRoomKeys>(ROOM_KEYS_KEY);
+}
+
 export async function getRoomKeys() {
-	const str = getStorageItem<StringRoomKeys>(ROOM_KEYS_KEY);
+	const str = getStringRoomKeys();
 	if (!str) {
 		return null;
 	}
@@ -57,7 +61,12 @@ export async function setRoomKeys(keys: Record<string, CryptoKey>) {
 }
 
 export function exportData() {
-	return Base64.encodeURL(JSON.stringify(STORAGE));
+	return Base64.encodeURL(
+		JSON.stringify({
+			[ACCOUNT_KEY]: getAccount(),
+			[ROOM_KEYS_KEY]: getStringRoomKeys()
+		})
+	);
 }
 
 export function importData(data: string) {
@@ -74,10 +83,10 @@ export function importData(data: string) {
 	}
 }
 
-export function getAppDownloaded() {
-	return getStorageItem<boolean>(APP_DOWNLOADED_KEY);
+export function getAppDownloadPopup() {
+	return getStorageItem<boolean>(APP_DOWNLOAD_POPUP_KEY);
 }
 
-export function setAppDownloaded(downloaded: boolean) {
-	setStorageItem(APP_DOWNLOADED_KEY, downloaded);
+export function setAppDownloadPopup(popup: boolean) {
+	setStorageItem(APP_DOWNLOAD_POPUP_KEY, popup);
 }

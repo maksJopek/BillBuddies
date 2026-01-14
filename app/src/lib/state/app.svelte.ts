@@ -3,6 +3,7 @@ import { toast } from 'svelte-sonner';
 import { goto, invalidateAll } from '$app/navigation';
 import {
 	ACCOUNT_EXPORT_HASH_PARAM,
+	IS_ANDROID_BROWSER,
 	IS_TAURI,
 	ROOM_TOKEN_HASH_PARAM
 } from '$lib/constants';
@@ -35,6 +36,7 @@ export interface ToastMessage {
 }
 
 export interface AppState {
+	appDownloadPopup: boolean;
 	rooms: Room[];
 	roomKeys: storage.RoomKeys;
 	account: storage.Account;
@@ -54,6 +56,7 @@ function defaultAccount() {
 }
 
 export const appState = $state<AppState>({
+	appDownloadPopup: storage.getAppDownloadPopup() ?? true,
 	rooms: [],
 	roomKeys: {},
 	account: storage.getAccount() ?? defaultAccount(),

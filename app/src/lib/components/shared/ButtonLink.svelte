@@ -1,17 +1,17 @@
 <script lang="ts">
-	import type { Snippet } from 'svelte';
 	import type { HTMLAnchorAttributes } from 'svelte/elements';
+	import type { ButtonProps } from '$lib/components';
 	import './Button.css';
 
-	interface Props extends HTMLAnchorAttributes {
-		children: Snippet;
-		href: string;
-		color?: 'primary' | 'neutral' | 'danger';
-	}
-
-	let { children, color = 'neutral', ...props }: Props = $props();
+	let {
+		children,
+		color = 'primary',
+		fullWidth,
+		spacious,
+		...props
+	}: ButtonProps & HTMLAnchorAttributes = $props();
 </script>
 
-<a {...props} class={['Button', color]}>
+<a {...props} class={['Button', color]} class:fullWidth class:spacious>
 	{@render children()}
 </a>

@@ -7,3 +7,6 @@ export { default as InfoIcon } from './InfoIcon.svelte';
 export { default as PlusIcon } from './PlusIcon.svelte';
 export { default as SettingsIcon } from './SettingsIcon.svelte';
 export { default as ShareIcon } from './ShareIcon.svelte';
+export { default as SmartphoneIcon } from './SmartphoneIcon.svelte';
+export { default as UploadIcon } from './UploadIcon.svelte';
+export { default as UserIcon } from './UserIcon.svelte';

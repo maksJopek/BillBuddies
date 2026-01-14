@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { appState } from '$lib/state';
-	import { Modal, Select } from '$lib/components';
+	import { FormModal, Select } from '$lib/components';
 	import { formatDatePretty } from '$lib/date';
 	import type { PaymentData } from '$lib/pdf';
 
@@ -19,7 +19,12 @@
 	}
 </script>
 
-<Modal bind:open title="Wybierz pokój" saveText="Wybierz" onSave={handleSave}>
+<FormModal
+	bind:open
+	title="Wybierz pokój"
+	saveText="Wybierz"
+	onSave={handleSave}
+>
 	{#if payment}
 		<div class="payment">
 			{#if payment.amount !== null}
@@ -35,7 +40,7 @@
 			<option value={room.id}>{room.name}</option>
 		{/each}
 	</Select>
-</Modal>
+</FormModal>
 
 <style>
 	.payment {
