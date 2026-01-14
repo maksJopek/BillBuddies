@@ -7,12 +7,14 @@
 		ButtonLink,
 		SmartphoneIcon,
 		UploadIcon,
-		UserIcon
+		UserIcon,
+		ShareIcon
 	} from '$lib/components';
 	import { APK_DOWNLOAD_FILENAME, APK_DOWNLOAD_PATH } from '$lib/constants';
-	import { appState, disableAppDownloadPopup } from '$lib/state';
+	import { appState, disableAppDownloadPopup, checkLocationHash } from '$lib/state';
 	import { onMount } from 'svelte';
 	import { IS_ANDROID_BROWSER } from '$lib/constants';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		open: boolean;
@@ -28,6 +30,8 @@
 
 	let usernameForm = $state(false);
 	let username = $state('');
+	let importForm = $state(false);
+	let importLink = $state('');
 
 	function handleChangeUsername() {
 		username = appState.account.name;
@@ -41,6 +45,32 @@
 
 	function handleUsernameFormCancel() {
 		usernameForm = false;
+	}
+
+	function handleOpenImport() {
+		importForm = true;
+	}
+
+	async function handleImportSave() {
+		if (!importLink.trim()) return;
+		try {
+			const url = new URL(importLink.trim());
+			if (!url.hash) {
+				toast.error('Link jest nieprawidłowy');
+				return;
+			}
+			open = false;
+			importForm = false;
+			importLink = '';
+			await checkLocationHash(url.hash);
+		} catch {
+			toast.error('Link jest nieprawidłowy');
+		}
+	}
+
+	function handleImportCancel() {
+		importForm = false;
+		importLink = '';
 	}
 
 	function handleClose() {
@@ -67,6 +97,15 @@
 				bind:value={username}
 			/>
 		</Form>
+	{:else if importForm}
+		<Form onSave={handleImportSave} onCancel={handleImportCancel}>
+			<Input
+				label="Link do importu"
+				type="text"
+				placeholder="https://..."
+				bind:value={importLink}
+			/>
+		</Form>
 	{:else}
 		<ul>
 			{#if IS_ANDROID_BROWSER}
@@ -89,6 +128,13 @@
 					<span>Eksportuj dane</span>
 					<span class="flex"></span>
 					<UploadIcon size="small" />
+				</Button>
+			</li>
+			<li>
+				<Button fullWidth spacious color="neutral" onclick={handleOpenImport}>
+					<span>Importuj dane</span>
+					<span class="flex"></span>
+					<ShareIcon size="small" />
 				</Button>
 			</li>
 			<li>

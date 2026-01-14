@@ -396,6 +396,7 @@ export async function checkLocationHash(hash: string) {
 	} else if (accountExport) {
 		const ok = storage.importData(accountExport);
 		if (ok) {
+			await loadRooms();
 			appState.loadingToasts.push({
 				type: 'success',
 				message: 'Pomyślnie zaimportowano konto'
