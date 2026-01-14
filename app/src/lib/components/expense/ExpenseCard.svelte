@@ -31,7 +31,7 @@
 		<span>{expense.description}</span>
 		<span class="meta">{meta}</span>
 	</div>
-	<div>{expense.amount.toFixed(2)}zł</div>
+	<div class="amount">{expense.amount.toFixed(2)}zł</div>
 </li>
 
 <style>
@@ -55,5 +55,9 @@
 		margin-top: 0.375rem;
 		font-size: 0.875rem;
 		color: var(--gray);
+	}
+
+	.amount {
+		font-size: 0.9375rem;
 	}
 </style>

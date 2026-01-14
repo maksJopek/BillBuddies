@@ -16,7 +16,7 @@
 {:else}
 	<main>
 		<div class="alert">
-			<AlertCircleIcon size={40} />
+			<AlertCircleIcon size="large" />
 		</div>
 		<h1>Coś poszło nie tak</h1>
 		<Button color="neutral" onclick={appLoadRetry}>Spróbuj ponownie</Button>
@@ -40,5 +40,11 @@
 	h1 {
 		font-size: 2rem;
 		letter-spacing: 0.5px;
+	}
+
+	@media (max-width: 480px) {
+		h1 {
+			font-size: 1.75rem;
+		}
 	}
 </style>

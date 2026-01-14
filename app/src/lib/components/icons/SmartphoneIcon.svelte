@@ -1,11 +1,7 @@
 <script lang="ts">
-	import { Icon } from '$lib/components';
+	import { Icon, type IconProps } from '$lib/components';
 
-	interface Props {
-		size?: number;
-	}
-
-	let { size }: Props = $props();
+	let { size }: IconProps = $props();
 </script>
 
 <Icon {size}>

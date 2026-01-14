@@ -109,7 +109,25 @@
 		gap: 1rem;
 	}
 
+	h1 {
+		font-size: 1.875rem;
+	}
+
 	ul {
 		gap: 1rem;
+	}
+
+	@media (max-width: 480px) {
+		.top {
+			gap: 0.5rem;
+		}
+
+		h1 {
+			font-size: 1.5rem;
+		}
+
+		ul {
+			gap: 0.875rem;
+		}
 	}
 </style>

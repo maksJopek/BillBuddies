@@ -16,3 +16,9 @@
 .IconButton:focus-visible {
 	background-color: var(--background-hover);
 }
+
+@media (max-width: 480px) {
+	.IconButton {
+		padding: 8px;
+	}
+}

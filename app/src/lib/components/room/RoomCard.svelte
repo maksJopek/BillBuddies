@@ -45,4 +45,10 @@
 	a:focus-visible {
 		border-color: var(--primary);
 	}
+
+	@media (max-width: 480px) {
+		a {
+			padding: 0.9375rem;
+		}
+	}
 </style>

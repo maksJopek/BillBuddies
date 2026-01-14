@@ -89,10 +89,21 @@
 	.balance {
 		display: flex;
 		gap: 0.5rem;
+		font-size: 1rem;
 		font-weight: 500;
 	}
 
 	ul {
 		gap: 1rem;
+	}
+
+	@media (max-width: 480px) {
+		.balance {
+			font-size: 0.9375rem;
+		}
+
+		ul {
+			gap: 0.875rem;
+		}
 	}
 </style>

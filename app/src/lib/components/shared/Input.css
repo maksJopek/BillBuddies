@@ -16,3 +16,9 @@
 .Input:focus-visible {
 	border-color: var(--primary-hover);
 }
+
+@media (max-width: 480px) {
+	.Input {
+		font-size: 0.9375rem;
+	}
+}

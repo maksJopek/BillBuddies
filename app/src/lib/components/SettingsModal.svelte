@@ -80,7 +80,7 @@
 					>
 						<span>Pobierz aplikację</span>
 						<span class="flex"></span>
-						<SmartphoneIcon size={20} />
+						<SmartphoneIcon size="small" />
 					</ButtonLink>
 				</li>
 			{/if}
@@ -88,7 +88,7 @@
 				<Button fullWidth spacious color="neutral" onclick={onDataExport}>
 					<span>Eksportuj dane</span>
 					<span class="flex"></span>
-					<UploadIcon size={20} />
+					<UploadIcon size="small" />
 				</Button>
 			</li>
 			<li>
@@ -100,7 +100,7 @@
 				>
 					<span>Zmień nazwę użytkownika</span>
 					<span class="flex"></span>
-					<UserIcon size={20} />
+					<UserIcon size="small" />
 				</Button>
 			</li>
 		</ul>

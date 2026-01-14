@@ -42,6 +42,18 @@
 	}
 
 	h2 {
+		font-size: 1.5rem;
+		font-weight: 700;
 		margin-bottom: 2rem;
+	}
+
+	@media (max-width: 480px) {
+		dialog {
+			padding: 1.25rem;
+		}
+
+		h2 {
+			font-size: 1.375rem;
+		}
 	}
 </style>

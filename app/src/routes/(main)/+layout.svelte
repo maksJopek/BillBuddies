@@ -133,16 +133,16 @@
 	toastOptions={{ unstyled: true, class: 'toast' }}
 >
 	{#snippet successIcon()}
-		<CheckIcon size={20} />
+		<CheckIcon size="small" />
 	{/snippet}
 	{#snippet infoIcon()}
-		<InfoIcon size={20} />
+		<InfoIcon size="small" />
 	{/snippet}
 	{#snippet errorIcon()}
-		<AlertCircleIcon size={20} />
+		<AlertCircleIcon size="small" />
 	{/snippet}
 	{#snippet warningIcon()}
-		<AlertTriangleIcon size={20} />
+		<AlertTriangleIcon size="small" />
 	{/snippet}
 </Toaster>
 
@@ -184,7 +184,7 @@
 
 	a {
 		color: inherit;
-		font-size: 1.5rem;
+		font-size: 1.375rem;
 		font-weight: 700;
 		text-decoration: none;
 		outline: none;
@@ -206,6 +206,7 @@
 	}
 
 	.settings-username {
+		font-size: 1rem;
 		font-weight: 500;
 		letter-spacing: 0.5px;
 	}
@@ -218,6 +219,25 @@
 		width: 100%;
 		max-width: 832px;
 		gap: 2rem;
-		padding: 1rem;
+		padding: 0.75rem 1.5rem;
+	}
+
+	@media (max-width: 480px) {
+		header {
+			padding: 0.625rem 0.75rem;
+		}
+
+		a {
+			font-size: 1rem;
+			padding: 0.25rem;
+		}
+
+		main {
+			padding: 0.875rem 1rem;
+		}
+
+		.settings-username {
+			font-size: 0.875rem;
+		}
 	}
 </style>
