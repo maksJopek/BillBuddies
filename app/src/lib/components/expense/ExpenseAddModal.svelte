@@ -102,7 +102,7 @@
 	{/if}
 	{#if !isPaymentShare}
 		<Button color="neutral" type="button" onclick={handleOpenPDF}>
-			Open PDF
+			Otwórz potwierdzenie transakcji
 		</Button>
 	{/if}
 </FormModal>

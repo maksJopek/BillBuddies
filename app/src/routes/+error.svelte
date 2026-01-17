@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { appLoadRetry } from '$lib/state';
+	import { appReload } from '$lib/state';
 	import { Button, ButtonLink, AlertCircleIcon } from '$lib/components';
 </script>
 
@@ -19,7 +19,7 @@
 			<AlertCircleIcon size="large" />
 		</div>
 		<h1>Coś poszło nie tak</h1>
-		<Button color="neutral" onclick={appLoadRetry}>Spróbuj ponownie</Button>
+		<Button color="neutral" onclick={appReload}>Spróbuj ponownie</Button>
 	</main>
 {/if}
 

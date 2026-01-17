@@ -2,6 +2,7 @@ export { default as AlertCircleIcon } from './AlertCircleIcon.svelte';
 export { default as AlertTriangleIcon } from './AlertTriangleIcon.svelte';
 export { default as ArrowLeftIcon } from './ArrowLeftIcon.svelte';
 export { default as CheckIcon } from './CheckIcon.svelte';
+export { default as DownloadIcon } from './DownloadIcon.svelte';
 export { default as Icon, type Props as IconProps } from './Icon.svelte';
 export { default as InfoIcon } from './InfoIcon.svelte';
 export { default as PlusIcon } from './PlusIcon.svelte';

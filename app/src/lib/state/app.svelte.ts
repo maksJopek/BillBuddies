@@ -1,5 +1,6 @@
-import { getCurrent as getCurrentUrls } from '@tauri-apps/plugin-deep-link';
+import { getCurrent as getStartUrls } from '@tauri-apps/plugin-deep-link';
 import { toast } from 'svelte-sonner';
+import { page } from '$app/state';
 import { goto, invalidateAll } from '$app/navigation';
 import {
 	ACCOUNT_EXPORT_HASH_PARAM,
@@ -38,6 +39,7 @@ export interface ToastMessage {
 }
 
 export interface AppState {
+	once: boolean;
 	appDownloadPopup: boolean;
 	rooms: Room[];
 	roomKeys: storage.RoomKeys;
@@ -45,6 +47,7 @@ export interface AppState {
 	loading: Promise<void> | null;
 	loadingToasts: ToastMessage[];
 	loadingRedirect: string | null;
+	loadingRoomToken: string | null;
 }
 
 function defaultAccount() {
@@ -58,13 +61,15 @@ function defaultAccount() {
 }
 
 export const appState = $state<AppState>({
+	once: false,
 	appDownloadPopup: storage.getAppDownloadPopup() ?? IS_ANDROID_BROWSER,
 	rooms: [],
 	roomKeys: {},
 	account: storage.getAccount() ?? defaultAccount(),
 	loading: null,
 	loadingToasts: [],
-	loadingRedirect: null
+	loadingRedirect: null,
+	loadingRoomToken: null
 });
 
 export function disableAppDownloadPopup() {
@@ -88,18 +93,97 @@ export function calcRoomBalance(room: crypto.Room) {
 	return mySum - wholeSum / users.length;
 }
 
-async function loadKeys() {
+export function parseDeepLinkHash(urls: string[]) {
+	try {
+		const url = new URL(urls[0]);
+		return url.hash;
+	} catch (error) {
+		console.error('deep link error:', error);
+		return null;
+	}
+}
+
+async function getStartHash() {
+	if (!IS_TAURI) {
+		if (location.hash) {
+			return location.hash;
+		} else {
+			return null;
+		}
+	}
+	const urls = await getStartUrls();
+	if (!urls) {
+		return null;
+	}
+	const hash = parseDeepLinkHash(urls);
+	if (!hash) {
+		appState.loadingToasts.push({
+			type: 'error',
+			message: 'Link jest nieprawidłowy'
+		});
+		appState.loadingRedirect = '/';
+		return null;
+	}
+	return hash;
+}
+
+function getHashParam(hash: string, name: string) {
+	if (!hash.startsWith(`#${name}=`)) {
+		return null;
+	}
+	const params = new URLSearchParams(hash.slice(1));
+	return params.get(name)!;
+}
+
+function getHashRoomToken(hash: string) {
+	return getHashParam(hash, ROOM_TOKEN_HASH_PARAM);
+}
+
+function getHashAccountExport(hash: string) {
+	return getHashParam(hash, ACCOUNT_EXPORT_HASH_PARAM);
+}
+
+async function loadStartHash() {
+	const hash = await getStartHash();
+	if (!hash) {
+		return;
+	}
+	const roomToken = getHashRoomToken(hash);
+	if (roomToken) {
+		appState.loadingRoomToken = roomToken;
+		return;
+	}
+	const accountExport = getHashAccountExport(hash);
+	if (accountExport) {
+		if (storage.importData(accountExport)) {
+			appState.loadingToasts.push({
+				type: 'success',
+				message: 'Pomyślnie zaimportowano konto'
+			});
+		} else {
+			appState.loadingToasts.push({
+				type: 'error',
+				message: 'Import konta nie powiódł się'
+			});
+		}
+		appState.loadingRedirect = '/';
+		return;
+	}
+	appState.loadingToasts.push({
+		type: 'error',
+		message: 'Link jest nieprawidłowy'
+	});
+	appState.loadingRedirect = '/';
+}
+
+async function loadRooms() {
 	const keys = await storage.getRoomKeys();
 	if (keys) {
 		appState.roomKeys = keys;
 	}
-}
-
-async function loadRooms() {
-	await loadKeys();
-	const keys = Object.entries(appState.roomKeys);
+	const entries = Object.entries(appState.roomKeys);
 	const ids = Object.keys(appState.roomKeys);
-	const promises: Promise<Room | null>[] = keys.map(async ([id, key]) => {
+	const promises: Promise<Room | null>[] = entries.map(async ([id, key]) => {
 		const apiRoom = await api.unsafeGetRoom(id);
 		if (!apiRoom) {
 			return null;
@@ -132,55 +216,6 @@ async function loadRooms() {
 	appState.rooms = rooms.filter((r) => r !== null);
 }
 
-function getHashParam(hash: string, name: string) {
-	if (!hash.startsWith(`#${name}=`)) {
-		return null;
-	}
-	const params = new URLSearchParams(location.hash.slice(1));
-	return params.get(name)!;
-}
-
-async function loadInitImport() {
-	let hash: string | null = null;
-	if (IS_TAURI) {
-		const urls = await getCurrentUrls();
-		if (!urls) {
-			return;
-		}
-		try {
-			const url = new URL(urls[0]);
-			hash = url.hash;
-		} catch (error) {
-			console.error('deep link url error:', error);
-			appState.loadingToasts.push({
-				type: 'error',
-				message: 'Link jest nieprawidłowy'
-			});
-		}
-	} else {
-		hash = location.hash;
-	}
-	if (!hash) {
-		return;
-	}
-	const data = getHashParam(hash, ACCOUNT_EXPORT_HASH_PARAM);
-	if (!data) {
-		return;
-	}
-	if (storage.importData(data)) {
-		appState.loadingToasts.push({
-			type: 'success',
-			message: 'Pomyślnie zaimportowano konto'
-		});
-	} else {
-		appState.loadingToasts.push({
-			type: 'error',
-			message: 'Import konta nie powiódł się'
-		});
-	}
-	appState.loadingRedirect = '/';
-}
-
 async function loadData() {
 	if (!appState.loading) {
 		appState.loading = loadRooms();
@@ -188,24 +223,22 @@ async function loadData() {
 	await appState.loading;
 }
 
-function resetData() {
-	appState.rooms = [];
-	appState.roomKeys = {};
-	appState.loading = null;
-}
-
 export async function appLoad() {
 	await ws.connect();
-	await loadInitImport();
+	if (!appState.once) {
+		await loadStartHash();
+	}
 	await loadData();
 }
 
 export function appUnload() {
-	resetData();
+	appState.rooms = [];
+	appState.roomKeys = {};
+	appState.loading = null;
 	ws.disconnect();
 }
 
-export async function appLoadRetry() {
+export async function appReload() {
 	appUnload();
 	await invalidateAll();
 }
@@ -261,7 +294,7 @@ async function saveRoom(id: string, data: Partial<crypto.Room>) {
 	Object.assign(room, { ...data, balance: calcRoomBalance(combined) });
 }
 
-export async function importRoom(token: string) {
+async function importRoom(token: string) {
 	const parsedToken = await crypto.parseRoomToken(token);
 	if (!parsedToken) {
 		toast.error('Link jest nieprawidłowy');
@@ -290,18 +323,44 @@ export async function importRoom(token: string) {
 	return id;
 }
 
-export async function checkRoomToken(hash: string) {
-	const token = getHashParam(hash, ROOM_TOKEN_HASH_PARAM);
-	if (!token) {
-		return false;
-	}
+export async function importRoomRedirect(token: string) {
 	const id = await importRoom(token);
 	if (id) {
 		await goto(`/room/${id}`, { replaceState: true });
 	} else {
 		await goto(`/`, { replaceState: true });
 	}
-	return true;
+}
+
+export async function checkLocationHash(hash?: string) {
+	if (!hash) {
+		if (location.hash) {
+			hash = location.hash;
+		} else {
+			return;
+		}
+	}
+	const roomToken = getHashRoomToken(hash);
+	if (roomToken) {
+		await importRoomRedirect(roomToken);
+		return;
+	}
+	const accountExport = getHashAccountExport(hash);
+	if (accountExport) {
+		const ok = storage.importData(accountExport);
+		if (ok) {
+			appState.loadingToasts.push({
+				type: 'success',
+				message: 'Pomyślnie zaimportowano konto'
+			});
+			await goto(`/`, { replaceState: true });
+			await appReload();
+		} else {
+			toast.error('Import konta nie powiódł się');
+		}
+		return;
+	}
+	toast.error('Link jest nieprawidłowy');
 }
 
 export async function createRoom(name: string) {
@@ -328,6 +387,9 @@ export async function deleteRoom(id: string, localOnly = false) {
 		if (err === api.Err.UNEXPECTED) {
 			return;
 		}
+	}
+	if (page.url.pathname === `/room/${id}`) {
+		await goto('/');
 	}
 	appState.rooms = appState.rooms.filter((r) => r.id !== id);
 	delete appState.roomKeys[id];
@@ -380,32 +442,4 @@ export async function editAccount(name: string) {
 		room.users[id] = name;
 	}
 	await Promise.all(promises);
-}
-
-export async function checkLocationHash(hash: string) {
-	const params = new URLSearchParams(hash.slice(1));
-	const roomToken = params.get(ROOM_TOKEN_HASH_PARAM);
-	const accountExport = params.get(ACCOUNT_EXPORT_HASH_PARAM);
-	if (roomToken) {
-		const id = await importRoom(roomToken);
-		if (id) {
-			await goto(`/room/${id}`, { replaceState: true });
-		} else {
-			await goto(`/`, { replaceState: true });
-		}
-	} else if (accountExport) {
-		const ok = storage.importData(accountExport);
-		if (ok) {
-			await loadRooms();
-			appState.loadingToasts.push({
-				type: 'success',
-				message: 'Pomyślnie zaimportowano konto'
-			});
-			await goto(`/`, { replaceState: true, invalidateAll: true });
-		} else {
-			toast.error('Import konta nie powiódł się');
-		}
-	} else {
-		toast.error('Link jest nieprawidłowy');
-	}
 }

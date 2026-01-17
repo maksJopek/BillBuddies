@@ -27,7 +27,7 @@ func run() error {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins: []string{"https://jopek.eu", "http://localhost:1420", "http://tauri.localhost"},
+		AllowedOrigins: []string{"https://jopek.eu", "http://localhost:1420", "http://localhost:4173", "http://tauri.localhost"},
 		AllowedMethods: []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
 		MaxAge:         300,
 	}))

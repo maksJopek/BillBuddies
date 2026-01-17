@@ -3,7 +3,7 @@
 	import { toast, Toaster } from 'svelte-sonner';
 	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
-	import { checkPendingIntent } from 'tauri-plugin-get-pdf-api';
+	import { checkPendingIntent as checkPendingShareIntent } from 'tauri-plugin-get-pdf-api';
 	import { goto } from '$app/navigation';
 	import { extractPaymentFile, type PaymentData } from '$lib/pdf';
 	import {
@@ -22,7 +22,9 @@
 		appUnload,
 		appState,
 		checkLocationHash,
-		exportData
+		exportData,
+		parseDeepLinkHash,
+		importRoomRedirect
 	} from '$lib/state';
 	import { ACCOUNT_EXPORT_HASH_PARAM, IS_TAURI } from '$lib/constants';
 
@@ -61,6 +63,11 @@
 	}
 
 	async function handleLoadingEffects() {
+		appState.once = true
+		if (appState.loadingRoomToken) {
+			await importRoomRedirect(appState.loadingRoomToken);
+			appState.loadingRoomToken = null;
+		}
 		for (const t of appState.loadingToasts) {
 			const duration = t.duration;
 			switch (t.type) {
@@ -86,17 +93,16 @@
 	}
 
 	function handleOpenUrl(urls: string[]) {
-		try {
-			const url = new URL(urls[0]);
-			checkLocationHash(url.hash);
-		} catch (error) {
-			console.error('deep link url error:', error);
+		const hash = parseDeepLinkHash(urls);
+		if (hash) {
+			checkLocationHash(hash);
+		} else {
 			toast.error('Link jest nieprawidłowy');
 		}
 	}
 
-	async function handleIntent() {
-		const intent = await checkPendingIntent();
+	async function handleShareIntent() {
+		const intent = await checkPendingShareIntent();
 		if (!intent || !intent.uri) {
 			return;
 		}
@@ -111,14 +117,19 @@
 	let unlisten1: UnlistenFn | null = null;
 	let unlisten2: UnlistenFn | null = null;
 
+	$effect(() => {
+		if (appState.loading) {
+			appState.loading.then(handleLoadingEffects)
+		}
+	})
+
 	onMount(async () => {
-		handleLoadingEffects();
 		if (!IS_TAURI) {
 			return;
 		}
-		handleIntent();
+		handleShareIntent();
 		unlisten1 = await onOpenUrl(handleOpenUrl);
-		unlisten2 = await listen(TauriEvent.WINDOW_FOCUS, handleIntent);
+		unlisten2 = await listen(TauriEvent.WINDOW_FOCUS, handleShareIntent);
 	});
 
 	onDestroy(() => {
@@ -127,6 +138,8 @@
 		unlisten2?.();
 	});
 </script>
+
+<svelte:window onhashchange={() => checkLocationHash()} />
 
 <Toaster
 	position="bottom-center"

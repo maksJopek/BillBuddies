@@ -1,6 +1,6 @@
 import * as crypto from './crypto';
 import {
-	appLoadRetry,
+	appReload,
 	appState,
 	findRoom,
 	calcRoomBalance,
@@ -41,7 +41,7 @@ export async function connect() {
 			ws!.onclose = (event) => {
 				if (!event.wasClean) {
 					console.error('websocket close:', event);
-					appLoadRetry();
+					appReload();
 				}
 				ws = null;
 			};
@@ -89,4 +89,5 @@ export function sendRoomDelete(id: string) {
 
 export function disconnect() {
 	acquire()?.close();
+	ws = null;
 }

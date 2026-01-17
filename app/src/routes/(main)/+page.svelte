@@ -1,12 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import {
-		appState,
-		createRoom,
-		deleteRoom,
-		editRoom,
-		checkRoomToken
-	} from '$lib/state';
+	import { appState, createRoom, deleteRoom, editRoom } from '$lib/state';
 	import {
 		RoomCreateModal,
 		RoomEditModal,
@@ -46,10 +39,6 @@
 	async function handleDeleteRoom() {
 		await deleteRoom(roomEditModalId);
 	}
-
-	onMount(() => {
-		checkRoomToken(location.hash);
-	});
 </script>
 
 <div class="top">

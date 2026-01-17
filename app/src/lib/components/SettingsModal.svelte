@@ -8,10 +8,14 @@
 		SmartphoneIcon,
 		UploadIcon,
 		UserIcon,
-		ShareIcon
+		DownloadIcon
 	} from '$lib/components';
 	import { APK_DOWNLOAD_FILENAME, APK_DOWNLOAD_PATH } from '$lib/constants';
-	import { appState, disableAppDownloadPopup, checkLocationHash } from '$lib/state';
+	import {
+		appState,
+		disableAppDownloadPopup,
+		checkLocationHash
+	} from '$lib/state';
 	import { onMount } from 'svelte';
 	import { IS_ANDROID_BROWSER } from '$lib/constants';
 	import { toast } from 'svelte-sonner';
@@ -48,13 +52,13 @@
 	}
 
 	function handleOpenImport() {
+		importLink = '';
 		importForm = true;
 	}
 
 	async function handleImportSave() {
-		if (!importLink.trim()) return;
 		try {
-			const url = new URL(importLink.trim());
+			const url = new URL(importLink);
 			if (!url.hash) {
 				toast.error('Link jest nieprawidłowy');
 				return;
@@ -63,14 +67,14 @@
 			importForm = false;
 			importLink = '';
 			await checkLocationHash(url.hash);
-		} catch {
+		} catch (error) {
+			console.error("import link error:",error);
 			toast.error('Link jest nieprawidłowy');
 		}
 	}
 
 	function handleImportCancel() {
 		importForm = false;
-		importLink = '';
 	}
 
 	function handleClose() {
@@ -98,7 +102,7 @@
 			/>
 		</Form>
 	{:else if importForm}
-		<Form onSave={handleImportSave} onCancel={handleImportCancel}>
+		<Form onSave={handleImportSave} onCancel={handleImportCancel} saveText="Importuj">
 			<Input
 				label="Link do importu"
 				type="text"
@@ -124,6 +128,18 @@
 				</li>
 			{/if}
 			<li>
+				<Button
+					fullWidth
+					spacious
+					color="neutral"
+					onclick={handleChangeUsername}
+				>
+					<span>Zmień nazwę użytkownika</span>
+					<span class="flex"></span>
+					<UserIcon size="small" />
+				</Button>
+			</li>
+			<li>
 				<Button fullWidth spacious color="neutral" onclick={onDataExport}>
 					<span>Eksportuj dane</span>
 					<span class="flex"></span>
@@ -134,19 +150,7 @@
 				<Button fullWidth spacious color="neutral" onclick={handleOpenImport}>
 					<span>Importuj dane</span>
 					<span class="flex"></span>
-					<ShareIcon size="small" />
-				</Button>
-			</li>
-			<li>
-				<Button
-					fullWidth
-					spacious
-					color="neutral"
-					onclick={handleChangeUsername}
-				>
-					<span>Zmień nazwę użytkownika</span>
-					<span class="flex"></span>
-					<UserIcon size="small" />
+					<DownloadIcon size="small" />
 				</Button>
 			</li>
 		</ul>

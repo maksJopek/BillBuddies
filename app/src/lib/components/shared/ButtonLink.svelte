@@ -5,7 +5,7 @@
 
 	let {
 		children,
-		color = 'primary',
+		color = 'neutral',
 		fullWidth,
 		spacious,
 		...props

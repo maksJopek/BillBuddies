@@ -60,22 +60,26 @@ export async function setRoomKeys(keys: Record<string, CryptoKey>) {
 	setStorageItem(ROOM_KEYS_KEY, str);
 }
 
+interface Export {
+	[ACCOUNT_KEY]: Account;
+	[ROOM_KEYS_KEY]: StringRoomKeys;
+}
+
 export function exportData() {
-	return Base64.encodeURL(
-		JSON.stringify({
-			[ACCOUNT_KEY]: getAccount(),
-			[ROOM_KEYS_KEY]: getStringRoomKeys()
-		})
-	);
+	const data: Export = {
+		[ACCOUNT_KEY]: getAccount()!,
+		[ROOM_KEYS_KEY]: getStringRoomKeys() ?? {}
+	};
+	return Base64.encodeURL(JSON.stringify(data));
 }
 
 export function importData(data: string) {
 	try {
-		const storage = JSON.parse(Base64.decode(data));
+		const storage: Export = JSON.parse(Base64.decode(data));
 		for (const [key, val] of Object.entries(storage)) {
 			setStorageItem(key, val);
 		}
-		appState.account = getAccount()!;
+		appState.account = storage[ACCOUNT_KEY];
 		return true;
 	} catch (error) {
 		console.error('account import error:', error);
