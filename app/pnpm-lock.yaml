@@ -20,12 +20,6 @@ importers:
       '@tauri-apps/plugin-fs':
         specifier: ~2.4.4
         version: 2.4.4
-      '@tauri-apps/plugin-opener':
-        specifier: ^2
-        version: 2.5.0
-      '@tauri-apps/plugin-os':
-        specifier: ~2.3.2
-        version: 2.3.2
       js-base64:
         specifier: ^3.7.8
         version: 3.7.8
@@ -35,9 +29,9 @@ importers:
       svelte-sonner:
         specifier: ^1.0.7
         version: 1.0.7(svelte@5.39.13)
-      tauri-plugin-get-pdf-api:
-        specifier: file:./tauri-plugin-get-pdf
-        version: file:tauri-plugin-get-pdf
+      tauri-plugin-mobile-sharetarget-api:
+        specifier: file:./tauri-plugin-mobile-sharetarget
+        version: file:tauri-plugin-mobile-sharetarget
     devDependencies:
       '@sveltejs/adapter-static':
         specifier: ^3.0.6
@@ -545,12 +539,6 @@ packages:
   '@tauri-apps/plugin-fs@2.4.4':
     resolution: {integrity: sha512-MTorXxIRmOnOPT1jZ3w96vjSuScER38ryXY88vl5F0uiKdnvTKKTtaEjTEo8uPbl4e3gnUtfsDVwC7h77GQLvQ==}
 
-  '@tauri-apps/plugin-opener@2.5.0':
-    resolution: {integrity: sha512-B0LShOYae4CZjN8leiNDbnfjSrTwoZakqKaWpfoH6nXiJwt6Rgj6RnVIffG3DoJiKsffRhMkjmBV9VeilSb4TA==}
-
-  '@tauri-apps/plugin-os@2.3.2':
-    resolution: {integrity: sha512-n+nXWeuSeF9wcEsSPmRnBEGrRgOy6jjkSU+UVCOV8YUGKb2erhDOxis7IqRXiRVHhY8XMKks00BJ0OAdkpf6+A==}
-
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
 
@@ -727,8 +715,8 @@ packages:
     resolution: {integrity: sha512-NRAAL96UXKwOTgS+8T6tQT8mILlylTJePvUjyUAU+ryE+MQTA71PXiQz5cMsFey2eSttBy+3kt+BR0l1XFNNBw==}
     engines: {node: '>=18'}
 
-  tauri-plugin-get-pdf-api@file:tauri-plugin-get-pdf:
-    resolution: {directory: tauri-plugin-get-pdf, type: directory}
+  tauri-plugin-mobile-sharetarget-api@file:tauri-plugin-mobile-sharetarget:
+    resolution: {directory: tauri-plugin-mobile-sharetarget, type: directory}
 
   tinyglobby@0.2.15:
     resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
@@ -1117,14 +1105,6 @@ snapshots:
     dependencies:
       '@tauri-apps/api': 2.8.0
 
-  '@tauri-apps/plugin-opener@2.5.0':
-    dependencies:
-      '@tauri-apps/api': 2.8.0
-
-  '@tauri-apps/plugin-os@2.3.2':
-    dependencies:
-      '@tauri-apps/api': 2.8.0
-
   '@types/cookie@0.6.0': {}
 
   '@types/estree@1.0.8': {}
@@ -1319,7 +1299,7 @@ snapshots:
       magic-string: 0.30.19
       zimmerframe: 1.1.4
 
-  tauri-plugin-get-pdf-api@file:tauri-plugin-get-pdf:
+  tauri-plugin-mobile-sharetarget-api@file:tauri-plugin-mobile-sharetarget:
     dependencies:
       '@tauri-apps/api': 2.8.0
 

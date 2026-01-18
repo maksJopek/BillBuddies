@@ -3,7 +3,7 @@
 	import { toast, Toaster } from 'svelte-sonner';
 	import { listen, TauriEvent, type UnlistenFn } from '@tauri-apps/api/event';
 	import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
-	import { checkPendingIntent as checkPendingShareIntent } from 'tauri-plugin-get-pdf-api';
+	import { popIntentQueue } from 'tauri-plugin-mobile-sharetarget-api';
 	import { goto } from '$app/navigation';
 	import { extractPaymentFile, type PaymentData } from '$lib/pdf';
 	import {
@@ -32,10 +32,6 @@
 
 	let settingsModalOpen = $state(false);
 	let roomSelectModalOpen = $state(false);
-	let roomSelectModalPayment = $state<PaymentData>({
-		amount: null,
-		date: null
-	});
 
 	function handleOpenSettings() {
 		settingsModalOpen = true;
@@ -56,14 +52,17 @@
 
 	async function handleSelectRoom(id: string) {
 		paymentShare.roomId = id;
-		paymentShare.data = roomSelectModalPayment;
 		roomSelectModalOpen = false;
-		roomSelectModalPayment = { amount: null, date: null };
 		await goto(`/room/${id}`);
 	}
 
+	function handleCancelSelectRoom() {
+		roomSelectModalOpen = false;
+		paymentShare.data = { amount: null, date: null };
+	}
+
 	async function handleLoadingEffects() {
-		appState.once = true
+		appState.once = true;
 		if (appState.loadingRoomToken) {
 			await importRoomRedirect(appState.loadingRoomToken);
 			appState.loadingRoomToken = null;
@@ -92,6 +91,30 @@
 		}
 	}
 
+	$effect(() => {
+		if (appState.loading) {
+			appState.loading.then(handleLoadingEffects);
+		}
+	});
+
+	async function handleShareIntent() {
+		const intent = await popIntentQueue();
+		if (!intent) {
+			return;
+		}
+		const data = await extractPaymentFile(intent);
+		if (!data) {
+			return;
+		}
+		if (appState.rooms.length === 0) {
+			toast.error('Nie jesteś jeszcze w żadnym pokoju');
+		} else {
+			await goto('/', { replaceState: true });
+			roomSelectModalOpen = true;
+			paymentShare.data = data;
+		}
+	}
+
 	function handleOpenUrl(urls: string[]) {
 		const hash = parseDeepLinkHash(urls);
 		if (hash) {
@@ -101,41 +124,25 @@
 		}
 	}
 
-	async function handleShareIntent() {
-		const intent = await checkPendingShareIntent();
-		if (!intent || !intent.uri) {
-			return;
-		}
-		const data = await extractPaymentFile(intent.uri);
-		if (!data) {
-			return;
-		}
-		roomSelectModalOpen = true;
-		roomSelectModalPayment = data;
-	}
-
-	let unlisten1: UnlistenFn | null = null;
-	let unlisten2: UnlistenFn | null = null;
-
-	$effect(() => {
-		if (appState.loading) {
-			appState.loading.then(handleLoadingEffects)
-		}
-	})
+	let onShareIntentUnlisten: UnlistenFn | null = null;
+	let onOpenUrlUnlisten: UnlistenFn | null = null;
 
 	onMount(async () => {
 		if (!IS_TAURI) {
 			return;
 		}
-		handleShareIntent();
-		unlisten1 = await onOpenUrl(handleOpenUrl);
-		unlisten2 = await listen(TauriEvent.WINDOW_FOCUS, handleShareIntent);
+		await handleShareIntent();
+		onShareIntentUnlisten = await listen(
+			TauriEvent.WINDOW_FOCUS,
+			handleShareIntent
+		);
+		onOpenUrlUnlisten = await onOpenUrl(handleOpenUrl);
 	});
 
-	onDestroy(() => {
+	onDestroy(async () => {
 		appUnload();
-		unlisten1?.();
-		unlisten2?.();
+		onShareIntentUnlisten?.();
+		onOpenUrlUnlisten?.();
 	});
 </script>
 
@@ -182,8 +189,8 @@
 
 <RoomSelectModal
 	bind:open={roomSelectModalOpen}
-	payment={roomSelectModalPayment}
 	onSelect={handleSelectRoom}
+	onCancel={handleCancelSelectRoom}
 />
 
 <style>

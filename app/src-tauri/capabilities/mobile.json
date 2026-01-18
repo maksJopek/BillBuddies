@@ -1,0 +1,14 @@
+{
+	"$schema": "../gen/schemas/mobile-schema.json",
+	"identifier": "mobile",
+	"description": "Capability for the mobile window",
+	"windows": ["main"],
+	"permissions": [
+		"mobile-sharetarget:default",
+		"core:default",
+		"fs:default",
+		"dialog:default",
+		"deep-link:default"
+	],
+	"platforms": ["android"]
+}

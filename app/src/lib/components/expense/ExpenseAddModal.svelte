@@ -46,12 +46,20 @@
 		}
 	});
 
-	function handleSave() {
+	function resetPaymentShare() {
 		if (isPaymentShare) {
 			paymentShare.roomId = null;
 			paymentShare.data = { amount: null, date: null };
 		}
+	}
+
+	function handleSave() {
+		resetPaymentShare();
 		onAdd(form as ExpenseFormSubmitProps);
+	}
+
+	function handleCancel() {
+		resetPaymentShare();
 	}
 
 	function handlePDFData(data: PaymentData | null) {
@@ -86,7 +94,12 @@
 	}
 </script>
 
-<FormModal bind:open title="Dodaj nowy wydatek" onSave={handleSave}>
+<FormModal
+	bind:open
+	title="Dodaj nowy wydatek"
+	onSave={handleSave}
+	onCancel={handleCancel}
+>
 	<ExpenseForm
 		bind:amount={form.amount}
 		bind:description={form.description}
